@@ -9,12 +9,12 @@ a = Account(accountName="jmurrayufo")
 a.get_characters()
 
 for c in a.characters():
-    if c.character == "SotonAshKetch":
+    print(c)
+    continue
+    if c.character == "Sotonis":
         break
-
+exit()
 print(c)
-i = 0
-while 1:
-    d = c.get_stash_tab(i)
-    pprint(d)
-    time.sleep(1)
+for i in c.iter_items():
+    # print(i)
+    i

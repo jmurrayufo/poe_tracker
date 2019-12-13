@@ -4,6 +4,7 @@
 
 import requests
 from pprint import pprint
+from .item import ItemBase, ItemButler
 
 class Character:
 
@@ -33,8 +34,12 @@ class Character:
         """
         if self.inventory == None:
             self.update_inventory()
-        
 
+        for item in self.inventory['items']:
+             yield ItemButler(item)
+        for item in self.inventory['items']:
+            print()
+            pprint(item)
 
 
     def get_stash_tab(self, index=0):
