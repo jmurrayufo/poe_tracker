@@ -4,5 +4,5 @@
 # export CLIENT_TOKEN="LOTS OF NUMBERS THAT MAKE A TOKEN GO HERE"
 
 git pull
-source ~/.ssh/stellar-flux.prod.creds
+source ~/.ssh/poebot-prod.creds
 pipenv run python3.7 -m bot --env prod "$@"
