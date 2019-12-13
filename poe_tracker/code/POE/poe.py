@@ -1,14 +1,14 @@
 import re
 import shlex
 import datetime
+import asyncio
 
 from ..Client import Client
 from ..CommandProcessor import DiscordArgumentParser, ValidUserAction
 from ..CommandProcessor.exceptions import NoValidCommands, HelpNeeded
 from ..Log import Log
 from ..SQL import SQL
-
-
+from . import POE_SQL, POE_Loop, Account, Character
 
 class POE:
 
@@ -17,6 +17,7 @@ class POE:
         self.log = Log()
         self.ready = False
         self.sql = SQL()
+        self.poe_sql = POE_SQL()
 
 
     async def on_message(self, message):
@@ -34,6 +35,10 @@ class POE:
 
 
     async def on_ready(self):
+        asyncio.create_task(POE_Loop(15).loop())
+
+        await self.poe_sql.table_setup()
+
         self.log.info("POE, ready to recieve commands!")
         self.ready = True
 
@@ -57,7 +62,7 @@ class POE:
         sub_parser = sp.add_parser('register',
             description='Register a user account for tracking')
         sub_parser.add_argument(
-            "account",
+            "accounts",
             help="user account",
             nargs='+',
         )
@@ -83,7 +88,7 @@ class POE:
         try:
             self.log.info("Parse Arguments")
             results = parser.parse_args(shlex.split(message.content)[1:])
-            self.log.info(results)
+            # self.log.info(results)
 
             if type(results) == str:
                 self.log.info("Got normal return, printing and returning")
@@ -111,60 +116,27 @@ class POE:
             msg = f"{e}. You can add `-h` or `--help` to any command to get help!"
             await message.channel.send(msg)
             return
-            pass
-
         return
+
 
     async def _cmd_leaderboard(self, args):
         return
 
+
     async def _cmd_register(self, args):
-        # message = args.message
-        self.log.info(f"Regsiter {args}")
-        self.log.warning("I don't actually know how to register users yet... Sorry!")
-        await args.message.channel.send("Sorry, I don't actually know how to register you yet...")
-        return
-        user_id = args.user_id if args.user_id else args.message.author.id
 
-        cur = self.sql.cur
+        for account in args.accounts:
 
-        cmd = """
-            SELECT * FROM channels
-        """
-        channel_data = cur.execute(cmd).fetchall()
-        # Rekey this data
-        channel_lookup = {}
-        for channel in channel_data:
-            channel_lookup[channel['channel_id']] = channel
+            a = Account(account)
+            if not a.check_good():
+                await args.message.channel.send(f"Account `{account}` doesn't seem ot be valid?")
+                continue
 
-        cmd = f"""
-            SELECT * FROM user_channel_stats WHERE user_id={user_id}
-        """
-        user_data = cur.execute(cmd).fetchall()
+            success = await self.poe_sql.register_account(account)
+            if success:
+                self.log.info(f"Registered {account}")
+                await args.message.channel.send(f"Registered {account}")
+            else:
+                self.log.warning(f"Cannot register {account}, account already exists.")
+                await args.message.channel.send(f"Cannot register {account}, account already exists.")
 
-        msg = f"Stats for user: <@{user_id}>"
-        msg += "\n```\n"
-        for row in user_data:
-            self.log.info(row)
-
-            # Check if we need to dump this message early
-            if len(msg) > 1900:
-                msg += "\n```"
-
-                self.log.info(f"Message len is: {len(msg)}")
-                await args.message.channel.send(msg)
-                msg = "```\n"
-
-            msg += f"\nChannel: {channel_lookup[row['channel_id']]['name']}\n"
-            msg += f"      Messages: {row['messages']:,d}\n"
-            last_active = datetime.datetime.fromtimestamp(row['last_active']).replace(microsecond=0)
-            last_active_delta = datetime.datetime.utcnow().replace(microsecond=0) - last_active
-            msg += f"   Last Active: {last_active} ({last_active_delta} ago)\n"
-        msg += "\n```"
-
-        self.log.info(f"Message len is: {len(msg)}")
-
-        await args.message.channel.send(msg)
-
-        self.log.info("Finished stat command")
-        return

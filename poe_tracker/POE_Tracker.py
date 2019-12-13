@@ -43,7 +43,6 @@ x = Client()
 x.register(SQL("poe.db"))
 x.register(POE())
 # x.register(Stats())
-# x.register(Game())
 
 #############################
 # Register all modules here #

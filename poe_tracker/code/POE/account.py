@@ -19,13 +19,21 @@ class Account:
         self.data = r.json()
 
 
-    def characters(self):
+    def check_good(self):
+        """
+        Attempt to pull account information, return if good status!
+        """
+        acct_url = self.acct_url.format(self.accountName)
+        r = requests.get(acct_url)
+        if r.status_code == 200:
+            return True
+        return False
+
+
+
+    def iter_characters(self):
         if self.data == None:
             self.get_characters()
 
-        for i in self.data:
-            yield character.Character(
-                accountName=self.accountName, 
-                character=i['name'], 
-                league=i['league'])
-
+        for character in self.data:
+            yield character

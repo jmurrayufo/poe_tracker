@@ -1,7 +1,7 @@
 #!/usr/bin/env python3.7
 
 
-from code import Character, Account
+from poe_tracker.code.POE import Character, Account
 from pprint import pprint
 import time
 

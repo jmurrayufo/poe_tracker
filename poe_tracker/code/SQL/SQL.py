@@ -18,6 +18,7 @@ class SQL(metaclass=Singleton):
 
     def __init__(self, db_name):
 
+        self.ready = False
         db_path = pathlib.Path(db_name)
         self.log = Log()
         if not db_path.is_file():
@@ -58,20 +59,22 @@ class SQL(metaclass=Singleton):
     async def on_ready(self):
         await self.table_setup()
 
-        for guild in self.client.guilds:
-            self.log.info(f"Boot registration for {guild}")
-            self.log.info(f"Register {len(guild.members)}")
-            self.log.info(f"Register {len(guild.channels)}")
-            for member in guild.members:
-                await self.register_user(member)
-            for channel in guild.channels:
-                if channel.type == discord.ChannelType.text:
-                    await self.register_channel(channel)
+        # for guild in self.client.guilds:
+        #     self.log.info(f"Boot registration for {guild}")
+        #     self.log.info(f"Register {len(guild.members)}")
+        #     self.log.info(f"Register {len(guild.channels)}")
+        #     for member in guild.members:
+        #         await self.register_user(member)
+        #     for channel in guild.channels:
+        #         if channel.type == discord.ChannelType.text:
+        #             await self.register_channel(channel)
 
         self.log.info("SQL registered to receive commands!")
+        self.ready = True
 
 
     async def on_message(self, message):
+        return
         self.log.debug(f"Got message: {message.content}")
         self.log.debug(f"       From: {message.author.name} ({message.author.id})")
         if message.guild:
@@ -249,7 +252,7 @@ class SQL(metaclass=Singleton):
             # await self.commit()
 
 
-    async def commit(self, now=True):
+    async def commit(self, now=False):
         # Schedule a commit in the future
         # Get loop from the client, schedule a call to _commit and return
         if now:
@@ -260,7 +263,7 @@ class SQL(metaclass=Singleton):
             asyncio.ensure_future(self._commit(now))
 
 
-    async def _commit(self, now=True):
+    async def _commit(self, now=False):
         self.log.debug("Start a _commit()")
         if self._commit_in_progress and not now:
             self.log.debug("Skipped a _commit()")
