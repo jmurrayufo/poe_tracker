@@ -234,7 +234,7 @@ class POE_SQL(metaclass=Singleton):
 
     async def iter_characters(self):
         cur = self.sql.conn.cursor()
-        cmd = "SELECT * FROM characters"
+        cmd = "SELECT *,ch.name as name,ac.name AS ac_name FROM characters ch INNER JOIN accounts ac on ch.account_id = ac.account_id"
         for row in cur.execute(cmd):
             yield row
 
