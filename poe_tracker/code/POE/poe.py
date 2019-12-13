@@ -37,7 +37,7 @@ class POE:
 
 
     async def on_ready(self):
-        asyncio.create_task(POE_Loop(15).loop())
+        asyncio.create_task(POE_Loop(120).loop())
 
         await self.poe_sql.table_setup()
 
