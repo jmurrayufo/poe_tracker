@@ -1,7 +1,7 @@
 # https://www.pathofexile.com/character-window/get-characters?accountName=jmurrayufo
 
 import requests
-from . import character
+from . import Character
 
 class Account:
 
@@ -9,7 +9,12 @@ class Account:
 
     def __init__(self, accountName):
         self.accountName = accountName
+        self.name = self.accountName
         self.data = None
+    
+
+    def __str__(self):
+        return f"Account({self.name})"
 
 
     def get_characters(self):
@@ -30,10 +35,9 @@ class Account:
         return False
 
 
-
     def iter_characters(self):
         if self.data == None:
             self.get_characters()
 
         for character in self.data:
-            yield character
+            yield Character(character, self)

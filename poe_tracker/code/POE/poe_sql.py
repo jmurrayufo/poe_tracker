@@ -82,6 +82,7 @@ class POE_SQL(metaclass=Singleton):
                     level           INTEGER NOT NULL,
                     experience      INTEGER NOT NULL,
                     timestamp       INTEGER NOT NULL,
+                    UNIQUE(character_id, experience),
                     FOREIGN KEY(character_id) REFERENCES characters(character_id)
                 )"""
             cur.execute(cmd)
@@ -127,6 +128,7 @@ class POE_SQL(metaclass=Singleton):
         for account in  cur.fetchall():
             yield account
 
+
     async def get_account_id(self, account_name):
         """
         Read account_id information to db
@@ -137,18 +139,18 @@ class POE_SQL(metaclass=Singleton):
         return cur.fetchone()['account_id']
 
 
-    async def register_character(self, char_dict, account_name):
+    async def register_character(self, character):
         """
         Write character information to db
         """
         cur = self.sql.conn.cursor()
         data = {}
-        data['account_id'] = await self.get_account_id(account_name)
-        data['name'] = char_dict['name']
-        data['league'] = char_dict['league']
-        data['class_id'] = char_dict['classId']
-        data['ascendancy_class'] = char_dict['ascendancyClass']
-        data['class'] = char_dict['class']
+        data['account_id'] = await self.get_account_id(character.account.name)
+        data['name'] = character.name
+        data['league'] = character.league
+        data['class_id'] = character.classId
+        data['ascendancy_class'] = character.ascendancyClass
+        data['class'] = character._class
         data['created_at'] = int(time.time())
         data['last_active'] = None
         cmd = """INSERT OR REPLACE INTO characters
@@ -173,21 +175,62 @@ class POE_SQL(metaclass=Singleton):
             )
         """
         cur.execute(cmd, data)
-        await self.write_xp(char_dict)
+        await self.write_xp(character)
         await self.sql.commit()
 
 
-    async def write_xp(self, char_dict):
+    async def has_character(self, character):
+        """
+        """
+        cur = self.sql.conn.cursor()
+        cmd = "SELECT * FROM characters WHERE name = ?"
+        cur.execute(cmd, (character.name,))
+        ret = cur.fetchall()
+        if len(ret):
+            return True
+        return False
+
+
+    async def get_character_id(self, character):
         """
         Write character information to db
         """
         cur = self.sql.conn.cursor()
+        cmd = "SELECT character_id FROM characters WHERE name = ?"
+        cur.execute(cmd, (character.name,))
+        return cur.fetchone()['character_id']
+
+
+    async def get_character_last_xp(self, character):
+        cur = self.sql.conn.cursor()
+        cmd = """
+        SELECT 
+            * 
+        FROM 
+            experience xp 
+        INNER JOIN 
+            characters ch ON xp.character_id = ch.character_id 
+        WHERE 
+            ch.name = ? 
+        ORDER BY 
+            timestamp DESC 
+        LIMIT 1"""
+        cur.execute(cmd, (character.name,))
+        return cur.fetchone()
+
+
+    async def write_xp(self, character):
+        """
+        Write xp information to db
+        This will silently fail if information is already in DB
+        """
+        cur = self.sql.conn.cursor()
         data = {}
-        data['character_id'] = await self.get_character_id(char_dict)
+        data['character_id'] = await self.get_character_id(character)
         data['timestamp'] = int(time.time())
-        data['level'] = char_dict['level']
-        data['experience'] = char_dict['experience']
-        cmd = """INSERT OR REPLACE INTO experience
+        data['level'] = character.level
+        data['experience'] = character.experience
+        cmd = """INSERT OR IGNORE INTO experience
             (
                 character_id,
                 level,
@@ -201,29 +244,7 @@ class POE_SQL(metaclass=Singleton):
             )
         """
         cur.execute(cmd, data)
-        await self.sql.commit()
+        if cur.rowcount:
+            await self.sql.commit()
+        return cur.rowcount
 
-
-    async def has_character(self, char_dict):
-        """
-        """
-        cur = self.sql.conn.cursor()
-        cmd = "SELECT * FROM characters WHERE name = ?"
-        cur.execute(cmd, (char_dict['name'],))
-        ret = cur.fetchall()
-        if len(ret):
-            return True
-        return False
-
-    async def get_character_id(self, char_dict):
-        """
-        Write character information to db
-        """
-        cur = self.sql.conn.cursor()
-        cmd = "SELECT character_id FROM accounts WHERE name = ?"
-        cur.execute(cmd, (char_dict['name'],))
-        return cur.fetchone()['character_id']
-
-
-
-        # TODO: Write function to get character XP

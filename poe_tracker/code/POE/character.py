@@ -11,15 +11,20 @@ class Character:
     char_url = "https://www.pathofexile.com/character-window/get-items?accountName={}&realm=pc&character={}"
     stash_url = "https://www.pathofexile.com/character-window/get-stash-items?accountName={}&realm=pc&league={}&tabs=0&tabIndex={}&public=false"
 
-    def __init__(self, accountName, character, league):
-        self.accountName = accountName
-        self.character = character
-        self.league = league
-        self.inventory = None
+    def __init__(self, char_dict, account):
+        # {'name': 'Sotonis', 'league': 'Standard', 'classId': 3, 'ascendancyClass': 2, 'class': 'Elementalist', 'level': 80, 'experience': 866729768, 'lastActive': True}
+        self.name = char_dict['name']
+        self.league = char_dict['league']
+        self.classId = char_dict['classId']
+        self.ascendancyClass = char_dict['ascendancyClass']
+        self._class = char_dict['class']
+        self.level = char_dict['level']
+        self.experience = char_dict['experience']
+        self.account = account
 
 
     def __str__(self):
-        return f"Character({self.accountName}, {self.character}, {self.league})"
+        return f"Character({self.name})"
 
 
     def update_inventory(self):

@@ -24,12 +24,16 @@ class POE_Loop:
         while 1:
             self.log.info("LOOP!")
             async for account_dict in self.poe_sql.iter_accounts():
-                self.log.info(account_dict)
                 a = Account(account_dict['name'])
                 for character in a.iter_characters():
-                    # self.log.info(character)
                     if not await self.poe_sql.has_character(character):
-                        self.log.info("Register a new char!")
-                        await self.poe_sql.register_character(character, account_dict['name'])
+                        self.log.info(f"Register a new character {character} under {a}")
+                        await self.poe_sql.register_character(character)
+                    else:
+                        db_char_dict = await self.poe_sql.get_character_last_xp(character)
+                        changes = await self.poe_sql.write_xp(character)
+                        if changes:
+                            self.log.info(f"XP infomation updated for {character}")
+
             
             await asyncio.sleep(self.sleep_time)

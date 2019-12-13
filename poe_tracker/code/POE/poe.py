@@ -28,10 +28,12 @@ class POE:
             self.log.warning(f"Saw message before we were ready: {message.content}")
             return
 
-        match_obj = re.match(r"^<@!\d+>", message.content)
+        self.log.info(f"saw message {message.content}")
+        match_obj = re.match(r"^<@!?\d+>", message.content)
         if match_obj and len(message.mentions)>0 and message.mentions[0] == self.client.user:
             self.log.info("Saw a mention of me, handle it!")
             await self.command_proc(message)
+        self.log.info("saw message")
 
 
     async def on_ready(self):
