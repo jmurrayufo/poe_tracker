@@ -4,9 +4,15 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+nose = "*"
+nose-timer = "*"
+coverage = "*"
 
 [packages]
+discord = "*"
+python-dateutil = "*"
 requests = "*"
+numpy = "*"
 
 [requires]
 python_version = "3.7"
