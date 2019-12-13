@@ -12,7 +12,7 @@ from .code.POE import POE
 parser = argparse.ArgumentParser(description='Basic Bot Demo')
 
 parser.add_argument('--name',
-                    default="StellarFlux",
+                    default="POEBot",
                     help='Name of this bot')
 
 parser.add_argument('--env',

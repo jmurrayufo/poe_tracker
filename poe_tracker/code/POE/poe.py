@@ -8,7 +8,7 @@ from ..CommandProcessor import DiscordArgumentParser, ValidUserAction
 from ..CommandProcessor.exceptions import NoValidCommands, HelpNeeded
 from ..Log import Log
 from ..SQL import SQL
-from . import POE_SQL, POE_Loop, Account, Character
+from . import POE_SQL, POE_Loop, Account, Character, Plotter
 
 class POE:
 
@@ -84,6 +84,15 @@ class POE:
         )
         sub_parser.set_defaults(cmd=self._cmd_leaderboard)
 
+        # Test various things
+        sub_parser = sp.add_parser('test',
+            description='Debug command (please ignore)')
+        sub_parser.add_argument(
+            "name",
+            help="Character name",
+        )
+        sub_parser.set_defaults(cmd=self._cmd_test)
+
 
         try:
             self.log.info("Parse Arguments")
@@ -120,7 +129,10 @@ class POE:
 
 
     async def _cmd_leaderboard(self, args):
-        return
+        self.log.info("Print leaders!")
+        async for char in self.poe_sql.iter_characters():
+            self.log.info(char)
+        await ars.message.channel.send("Sorry, this command is a WIP. Please try again later.")
 
 
     async def _cmd_register(self, args):
@@ -140,3 +152,15 @@ class POE:
                 self.log.warning(f"Cannot register {account}, account already exists.")
                 await args.message.channel.send(f"Cannot register {account}, account already exists.")
 
+
+    async def _cmd_test(self, args):
+        self.log.info("Check if character even exists")
+
+        if not await self.poe_sql.has_character_by_name(args.name):
+            await args.message.channel.send("Character not found.")
+            return
+
+        char_dict = await self.poe_sql.get_character_dict_by_name(args.name)
+        c = Character(char_dict, None)
+
+        await Plotter().plot_character(c, args.message.channel)

@@ -1,8 +1,8 @@
 import asyncio
 import datetime
 import re
-import time
 import sqlite3
+import time
 
 from ..Client import Client
 from ..Log import Log
@@ -188,7 +188,38 @@ class POE_SQL(metaclass=Singleton):
         ret = cur.fetchall()
         if len(ret):
             return True
+        return False    
+
+
+    async def has_character_by_name(self, name):
+        """
+        """
+        cur = self.sql.conn.cursor()
+        cmd = "SELECT * FROM characters WHERE name = ?"
+        cur.execute(cmd, (name,))
+        ret = cur.fetchall()
+        if len(ret):
+            return True
         return False
+
+
+    async def get_character_dict_by_name(self, name):
+        """
+        Return a character dict, formatted just like POE would have given us.
+        """
+        cur = self.sql.conn.cursor()
+        cmd = "SELECT * FROM characters WHERE name = ?"
+        cur.execute(cmd, (name,))
+        ret = cur.fetchone()
+        char_dict = {}
+        char_dict['name'] = ret['name']
+        char_dict['league'] = ret['league']
+        char_dict['classId'] = ret['class_id']
+        char_dict['ascendancyClass'] = ret['ascendancy_class']
+        char_dict['class'] = ret['class']
+        char_dict['level'] = 0
+        char_dict['experience'] = 0
+        return char_dict
 
 
     async def get_character_id(self, character):
@@ -199,6 +230,13 @@ class POE_SQL(metaclass=Singleton):
         cmd = "SELECT character_id FROM characters WHERE name = ?"
         cur.execute(cmd, (character.name,))
         return cur.fetchone()['character_id']
+
+
+    async def iter_characters(self):
+        cur = self.sql.conn.cursor()
+        cmd = "SELECT * FROM characters"
+        for row in cur.execute(cmd):
+            yield row
 
 
     async def get_character_last_xp(self, character):
@@ -248,3 +286,15 @@ class POE_SQL(metaclass=Singleton):
             await self.sql.commit()
         return cur.rowcount
 
+
+    async def iter_character_xp(self, character, start=None, end=None):
+        """
+        Async iteration of the characters xp
+            start: starting timestamp, entries must be above this
+            end: ending timestamp, entries must be under this
+        """
+        cur = self.sql.conn.cursor()
+        cmd = """SELECT timestamp, experience, level FROM experience xp INNER JOIN characters ch ON xp.character_id = ch.character_id WHERE ch.name = ? ORDER BY timestamp"""
+        for row in cur.execute(cmd, (character.name,)):
+            yield row
+            await asyncio.sleep(0)

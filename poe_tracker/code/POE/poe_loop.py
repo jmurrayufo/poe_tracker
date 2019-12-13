@@ -22,18 +22,22 @@ class POE_Loop:
         """
         self.log.info(f"Booted loop and sleeping for {self.sleep_time}s")
         while 1:
-            self.log.info("LOOP!")
-            async for account_dict in self.poe_sql.iter_accounts():
-                a = Account(account_dict['name'])
-                for character in a.iter_characters():
-                    if not await self.poe_sql.has_character(character):
-                        self.log.info(f"Register a new character {character} under {a}")
-                        await self.poe_sql.register_character(character)
-                    else:
-                        db_char_dict = await self.poe_sql.get_character_last_xp(character)
-                        changes = await self.poe_sql.write_xp(character)
-                        if changes:
-                            self.log.info(f"XP infomation updated for {character}")
+            try:
+                self.log.debug("Begin loop")
+                async for account_dict in self.poe_sql.iter_accounts():
+                    a = Account(account_dict['name'])
+                    for character in a.iter_characters():
+                        if not await self.poe_sql.has_character(character):
+                            self.log.info(f"Register a new character {character} under {a}")
+                            await self.poe_sql.register_character(character)
+                        else:
+                            db_char_dict = await self.poe_sql.get_character_last_xp(character)
+                            changes = await self.poe_sql.write_xp(character)
+                            if changes:
+                                self.log.info(f"XP infomation updated for {character}")
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except:
+                self.log.exception("")
 
-            
             await asyncio.sleep(self.sleep_time)
