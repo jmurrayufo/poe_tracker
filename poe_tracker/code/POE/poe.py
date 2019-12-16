@@ -241,16 +241,16 @@ class POE:
             self.log.info(f"Appended {c}")
 
 
-        if args.all:
-            if not await self.poe_sql.has_character_by_name(char_name):
-                # await args.message.channel.send("Character not found.")
-                # return
-                continue
+        # if args.all:
+        #     if not await self.poe_sql.has_character_by_name(char_name):
+        #         # await args.message.channel.send("Character not found.")
+        #         # return
+        #         continue
 
-            char_dict = await self.poe_sql.get_character_dict_by_name(char_name)
-            c = Character(char_dict, None)
-            characters.append(c)
-            self.log.info(f"Appended {c}")
+        #     char_dict = await self.poe_sql.get_character_dict_by_name(char_name)
+        #     c = Character(char_dict, None)
+        #     characters.append(c)
+        #     self.log.info(f"Appended {c}")
             
 
 
