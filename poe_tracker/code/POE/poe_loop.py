@@ -23,8 +23,12 @@ class POE_Loop:
         self.log.info(f"Booted loop and sleeping for {self.sleep_time}s")
         while 1:
             try:
+                await asyncio.sleep(self.sleep_time)
                 self.log.debug("Begin loop")
                 async for account_dict in self.poe_sql.iter_accounts():
+                    self.log.debug(f"Update account {account_dict['name']}")
+                    # I suspect the API hates us jamming in lots of requests, lets pause while we loop.
+                    await asyncio.sleep(2)
                     a = Account(account_dict['name'])
                     for character in a.iter_characters():
                         if not await self.poe_sql.has_character(character):
@@ -35,9 +39,9 @@ class POE_Loop:
                             changes = await self.poe_sql.write_xp(character)
                             if changes:
                                 self.log.info(f"XP infomation updated for {character}")
-            except (KeyboardInterrupt, SystemExit):
+            except (KeyboardInterrupt, SystemExit, RuntimeError):
                 raise
+                return
             except:
                 self.log.exception("")
 
-            await asyncio.sleep(self.sleep_time)

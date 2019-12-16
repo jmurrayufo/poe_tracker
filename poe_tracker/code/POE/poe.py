@@ -73,15 +73,8 @@ class POE:
         sub_parser = sp.add_parser('leaderboard',
             description='Print out leaderboard')
         sub_parser.add_argument(
-            "--character","-c",
-            help="Show just a specific character",
-            metavar="character_name",
-            nargs=1,
-        )
-        sub_parser.add_argument(
             "--league", "-l",
-            help="Show current league only",
-            action='store_true'
+            help="Filter to a league",
         )
         sub_parser.set_defaults(cmd=self._cmd_leaderboard)
 
@@ -89,8 +82,9 @@ class POE:
         sub_parser = sp.add_parser('test',
             description='Debug command (please ignore)')
         sub_parser.add_argument(
-            "name",
-            help="Character name",
+            "--league", "-l",
+            help="Filter to a league",
+            nargs=1,
         )
         sub_parser.set_defaults(cmd=self._cmd_test)
 
@@ -100,7 +94,6 @@ class POE:
         sub_parser.add_argument(
             "--league",
             help="Limit to a specific league",
-            nargs=1,
         )
         sub_parser.add_argument(
             "--recent",
@@ -113,6 +106,28 @@ class POE:
             help="Only give characters under the given account",
         )
         sub_parser.set_defaults(cmd=self._cmd_list)
+
+        # Plot Characters or Leagues
+        sub_parser = sp.add_parser('plot',
+            description='Debug command (please ignore)')
+        sub_parser.add_argument(
+            "names",
+            help="Character name",
+            nargs="*",
+        )
+        sub_parser.add_argument(
+            "--league", "-l",
+            help="Filter to a league",
+        )
+        sub_parser.add_argument(
+            "--recent", "-r",
+            help="Restrict to recent N hours",
+            nargs="?",
+            type=int,
+            metavar="N",
+            const=24,
+        )
+        sub_parser.set_defaults(cmd=self._cmd_plot)
 
         try:
             self.log.info("Parse Arguments")
@@ -148,17 +163,16 @@ class POE:
         return
 
 
-
-
-
-
-
-
     async def _cmd_leaderboard(self, args):
         self.log.info("Print leaders!")
 
         top_per_account = {}
         async for char in self.poe_sql.iter_characters():
+            # Filter if needed
+            if args.league is not None:
+                if not re.search(args.league, char['league'], flags=re.IGNORECASE):
+                    continue
+
             char.update(await self.poe_sql.get_character_dict_by_name(char['name']))
             xp = await self.poe_sql.get_character_last_xp(Character(char, None))
             char.update(xp)
@@ -176,16 +190,11 @@ class POE:
             self.log.info(top_per_account[i])
             char = top_per_account[i]
             char_and_account = f"{char['name']} ({char['ac_name']})"
-            message += f"{rank}) {char_and_account:>30} XP: {char['experience']:,} (Level:{char['level']}) \n"
+            message += f"{rank}) {char_and_account:>36} XP: {char['experience']:,} (Level:{char['level']}) \n"
             rank += 1
         message += "```"
 
         await args.message.channel.send(message)
-
-
-
-
-
 
 
 
@@ -208,16 +217,58 @@ class POE:
 
 
     async def _cmd_test(self, args):
+        self.log.info("Useless test command")
+        await args.message.channel.send(args)
+
+
+    async def _cmd_plot(self, args):
+        """
+        Grab characters from the SQL db and give to the plotting class
+        Note: Some filtering happens in the Plotter (such as time filters!)
+        """
         self.log.info("Check if character even exists")
 
-        if not await self.poe_sql.has_character_by_name(args.name):
-            await args.message.channel.send("Character not found.")
+        characters = []
+        for char_name in args.names:
+            if not await self.poe_sql.has_character_by_name(char_name):
+                # await args.message.channel.send("Character not found.")
+                # return
+                continue
+
+            char_dict = await self.poe_sql.get_character_dict_by_name(char_name)
+            c = Character(char_dict, None)
+            characters.append(c)
+            self.log.info(f"Appended {c}")
+
+
+        if args.all:
+            if not await self.poe_sql.has_character_by_name(char_name):
+                # await args.message.channel.send("Character not found.")
+                # return
+                continue
+
+            char_dict = await self.poe_sql.get_character_dict_by_name(char_name)
+            c = Character(char_dict, None)
+            characters.append(c)
+            self.log.info(f"Appended {c}")
+            
+
+
+        # If we didn't get any names, maybe we were just asked to filter a league?
+        if args.league is not None:
+            async for char in self.poe_sql.iter_characters():
+                if not re.search(args.league, char['league'], flags=re.IGNORECASE):
+                    continue
+                char_dict = await self.poe_sql.get_character_dict_by_name(char['name'])
+                c = Character(char_dict, None)
+                if c not in characters:
+                    characters.append(c)
+
+        if not len(characters):
+            await args.message.channel.send("I need chracters to plot!")
             return
 
-        char_dict = await self.poe_sql.get_character_dict_by_name(args.name)
-        c = Character(char_dict, None)
-
-        await Plotter().plot_character(c, args.message.channel)
+        await Plotter(args).plot_character(characters, args.message.channel)
 
 
     async def _cmd_list(self, args):
@@ -226,12 +277,20 @@ class POE:
         "--recent",
         "--account ACCOUNT",
         """
-        # em = discord.Embed()
         message = "```\n"
         async for char in self.poe_sql.iter_characters():
             # self.log.info(char)
             # em.add_field(name=char['aname'], value=char['name'])
-            message += f"{char['name']:20} ({char['ac_name']})\n"
+            if args.league and args.league in char['league'].lower():
+                message += f"{char['name']:20} ({char['ac_name']})\n"
+            elif args.league is None:
+                message += f"{char['name']:20} ({char['ac_name']})\n"
+
+            if len(message) > 1900:
+                message += "```"
+                await args.message.author.send(message)
+                message = "```\n"
+
 
         message += "```"
         await args.message.author.send(message)

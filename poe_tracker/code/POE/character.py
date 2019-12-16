@@ -27,6 +27,20 @@ class Character:
         return f"Character({self.name})"
 
 
+    def __repr__(self):
+        return self.__str__()
+
+
+    def __eq__(self, other):
+        if type(other) != type(self):
+            return NotImplemented
+        return self.name == other.name
+
+
+    def __hash__(self):
+        return hash(self.name)
+
+
     def update_inventory(self):
         char_url = self.char_url.format(self.accountName, self.character)
         r = requests.get(char_url)
