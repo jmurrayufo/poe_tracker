@@ -42,6 +42,9 @@ class POE_Loop:
             except (KeyboardInterrupt, SystemExit, RuntimeError):
                 raise
                 return
+            except requests.exceptions.HTTPError:
+                self.log.exception("Caught HTTP error, sleep.")
+                continue
             except:
                 self.log.exception("")
 

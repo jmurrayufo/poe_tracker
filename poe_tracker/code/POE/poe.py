@@ -109,7 +109,8 @@ class POE:
 
         # Plot Characters or Leagues
         sub_parser = sp.add_parser('plot',
-            description='Debug command (please ignore)')
+            description="Plot various player xp gains",
+            help="")
         sub_parser.add_argument(
             "names",
             help="Character name",
