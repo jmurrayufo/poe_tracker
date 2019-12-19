@@ -1,5 +1,11 @@
 #!/usr/bin/env python3.7
 
+
+
+
+
+
+
 from poe_tracker.code.POE.trade_api import Trade_API
 import datetime
 import time
