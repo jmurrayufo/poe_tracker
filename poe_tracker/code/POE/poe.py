@@ -117,6 +117,11 @@ class POE:
             nargs="*",
         )
         sub_parser.add_argument(
+            "--differential","-d",
+            action='store_true',
+            help="Calculate xp over time"
+        )
+        sub_parser.add_argument(
             "--league", "-l",
             help="Filter to a league",
         )

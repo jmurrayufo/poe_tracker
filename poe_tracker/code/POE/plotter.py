@@ -1,9 +1,10 @@
+import asyncio
 import datetime as dt
 import discord
+import humanize
 import io
 import numpy as np
 import time
-import asyncio
 
 from ..Log import Log
 from . import POE_SQL
@@ -33,14 +34,26 @@ class Plotter:
             y = []
             async for xp in self.poe_sql.iter_character_xp(character):
 
+                # Filter out items if we only want recent data
                 if self.args.recent:
                     if (time.time() - xp['timestamp'])/60/60 > int(self.args.recent):
                         continue
 
                 x.append(xp['timestamp'])
-                y.append(xp['experience']/1e6)
+                y.append(xp['experience'])
+
+
+            if self.args.differential:
+                # Step through each point in y, and caluclate it's difference
+                # Note that we drop a point along the way!
+                y = np.asarray(y)
+                # x = np.asarray(x)
+                y = list(60*60*np.diff(y)/np.diff(np.asarray(x)))
+                # We need to trim off the first element of x to makeup for the lost data in the differential
+                x = x[1:]
 
             x = [dt.datetime.fromtimestamp(ts) for ts in x]
+
             if len(x):
                 plot_sets.append((x,y,character.name))
                 characters_plotted.append(character.name)
@@ -50,7 +63,7 @@ class Plotter:
         if len(plot_sets) == 0:
             return
 
-        plt.figure()
+        plt.figure(figsize=(9,6))
         for plot_set in plot_sets:
             plt.plot(plot_set[0], plot_set[1], label=plot_set[2])
 
@@ -61,21 +74,33 @@ class Plotter:
         ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%Y-%m-%d %H:%M:%S'))
         plt.xticks( rotation=25 )
 
-        ax.yaxis.set_major_formatter(matplotlib.ticker.StrMethodFormatter('{x:,.0f}'))
-        ax.set_ylabel('XP (Millions)')
+        # ax.yaxis.set_major_formatter(matplotlib.ticker.StrMethodFormatter('{humanize.intword(x)}'))
+        ax.yaxis.set_major_formatter(CustomYFormatter())
+        ax.set_ylabel('XP')
 
-        plt.subplots_adjust(bottom=0.2)
+        #plt.subplots_adjust(bottom=0.2, left=0.2)
+
+        plt.grid()
 
         # Save figure to ram for printing to discord
         buf = io.BytesIO()
-        plt.savefig(buf, format='png')
+        plt.savefig(buf, format='png', bbox_inches='tight',dpi=100)
         buf.seek(0)
         f = discord.File(buf, filename="chart.png")
 
         # Send message to discord
         message = f"Plotting for characters: {', '.join(characters_plotted)}"
         await channel.send(message, file=f)
-    
+
+class CustomYFormatter(matplotlib.ticker.Formatter):
+
+
+    def __call__(self, x, pos=None):
+        return humanize.intword(x)
+
+    def format_data(self, value):
+        return humanize.intword(value)
+
 """
 import io
 from PIL import Image
