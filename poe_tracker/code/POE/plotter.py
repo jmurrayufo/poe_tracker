@@ -96,10 +96,10 @@ class CustomYFormatter(matplotlib.ticker.Formatter):
 
 
     def __call__(self, x, pos=None):
-        return humanize.intword(x)
+        return humanize.intword(x, "%.3f")
 
     def format_data(self, value):
-        return humanize.intword(value)
+        return humanize.intword(value, "%.3f")
 
 """
 import io
