@@ -5,7 +5,9 @@ from . import Character
 
 class Account:
 
+
     acct_url = "https://www.pathofexile.com/character-window/get-characters?accountName={}"
+
 
     def __init__(self, accountName):
         self.accountName = accountName
