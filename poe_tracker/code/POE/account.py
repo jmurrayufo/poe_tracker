@@ -13,6 +13,7 @@ class Account:
         self.accountName = accountName
         self.name = self.accountName
         self.data = None
+        self.headers = {}
     
 
     def __str__(self):
@@ -24,6 +25,7 @@ class Account:
         r = requests.get(acct_url)
         r.raise_for_status()
         self.data = r.json()
+        self.headers = r.headers
 
 
     def check_good(self):
@@ -32,6 +34,7 @@ class Account:
         """
         acct_url = self.acct_url.format(self.accountName)
         r = requests.get(acct_url)
+        self._headers = r._headers
         if r.status_code == 200:
             return True
         return False
