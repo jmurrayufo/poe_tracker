@@ -13,12 +13,13 @@ from . import POE_SQL, POE_Loop, Account, Character, Plotter
 
 class POE:
 
-    def __init__(self):
+    def __init__(self, args=None):
         self.client = Client()
         self.log = Log()
         self.ready = False
         self.sql = SQL()
         self.poe_sql = POE_SQL()
+        self.args = args
 
 
     async def on_message(self, message):
@@ -36,7 +37,7 @@ class POE:
 
 
     async def on_ready(self):
-        asyncio.create_task(POE_Loop(120).loop())
+        asyncio.create_task(POE_Loop(120, self.args).loop())
 
         await self.poe_sql.table_setup()
 

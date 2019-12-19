@@ -41,7 +41,7 @@ x = Client()
 #############################
 
 x.register(SQL("poe.db"))
-x.register(POE())
+x.register(POE(args))
 # x.register(Stats())
 
 #############################
