@@ -1,6 +1,7 @@
 
 import asyncio
 import requests
+import time
 
 from ..Client import Client
 from ..Log import Log
@@ -25,11 +26,10 @@ class POE_Loop:
         self.log.info(f"Booted loop and sleeping for {self.sleep_time}s")
         while 1:
             try:
+                t1 = time.time()
                 self.log.debug("Begin loop")
                 async for account_dict in self.poe_sql.iter_accounts():
                     self.log.debug(f"Update account {account_dict['name']}")
-                    # I suspect the API hates us jamming in lots of requests, lets pause while we loop.
-                    await asyncio.sleep(2)
                     a = Account(account_dict['name'])
                     for character in a.iter_characters():
                         if not await self.poe_sql.has_character(character):
@@ -41,6 +41,10 @@ class POE_Loop:
                             if changes:
                                 self.log.info(f"XP infomation updated for {character}")
                         await self.post_char_to_influx(character)
+
+                    # To save us from being blocked, check the headers and sleep away any needed delay
+                    await self.sleep_for_state(a.headers['X-Rate-Limit-Ip'], a.headers['X-Rate-Limit-Ip-State'])
+
             except (KeyboardInterrupt, SystemExit, RuntimeError):
                 raise
                 return
@@ -50,7 +54,11 @@ class POE_Loop:
             except:
                 self.log.exception("")
             finally:
-                await asyncio.sleep(self.sleep_time)
+
+                # Calculate out loop processing time, and sleep the remainder
+                # TODO: Doing this as a set time march would be better.
+                sleep_time = max(0, self.sleep_time - (time.time() - t1))
+                await asyncio.sleep(sleep_time)
 
 
     async def post_char_to_influx(self, character):
@@ -82,3 +90,36 @@ class POE_Loop:
         except Exception as e:
             self.log.exception("Posting to InfluxDB threw exception")
             # continue
+
+
+    async def sleep_for_state(self, policies, states):
+        """
+        Given a policy (eg: 60:60:60, 60 requests allowed in 60 seconds with a 60 second block if exceeded)
+        And a state (eg: 1:60:0, 1 request in the last 60 seconds with a 0 second timeout currently in effect)
+        Async sleep as needed to prevent throttling
+        'X-Rate-Limit-Ip': '60:60:60,200:120:900',
+        'X-Rate-Limit-Ip-State': '1:60:0,1:120:0',
+        We need to allow for complex policies if given them, such as this list seperated one!
+        """
+        sleep_needed = 0
+
+        policy_lists = []
+        for policy in policies.split(","):
+            # self.log.info(f"Saw policy {policy}")
+            policy_lists.append([int(i) for i in policy.split(":")])
+
+        state_lists = []
+        for state in states.split(","):
+            # self.log.info(f"Saw state {state}")
+            state_lists.append([int(i) for i in state.split(":")])
+
+
+        for index in range(len(policy_lists)):
+            # self.log.info(f"Parse {policy_lists[index]} against {state_lists[index]}")
+            sleep_time = ((state_lists[index][0]/policy_lists[index][0])**10)*state_lists[index][1]
+            sleep_needed = max(sleep_time, sleep_needed)
+            # self.log.info(f"Need {sleep_time}")
+
+        if sleep_needed > 1:
+            self.log.info(f"Sleeping for {sleep_needed:.1f} to avoid character limits ")
+        await asyncio.sleep(sleep_needed)
