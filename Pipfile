@@ -14,6 +14,7 @@ python-dateutil = "*"
 requests = "*"
 numpy = "*"
 matplotlib = "*"
+humanize = "*"
 
 [requires]
 python_version = "3.7"
