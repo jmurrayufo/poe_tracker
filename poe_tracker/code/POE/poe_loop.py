@@ -49,7 +49,7 @@ class POE_Loop:
                 raise
                 return
             except requests.exceptions.HTTPError:
-                self.log.exception("Caught HTTP error, sleep for 5 minutes.")
+                self.log.exception("Caught HTTP error, sleep for 5 minutescat.")
                 await asyncio.sleep(300)
                 continue
             except:
