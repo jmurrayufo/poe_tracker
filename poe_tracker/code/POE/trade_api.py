@@ -157,7 +157,8 @@ class Trade_API(metaclass=Singleton):
                         self.change_ids[key] = int(guesses[key][0]*.5 + guesses[key][1]*.5)
 
 
-                    if guesses[key][1] - guesses[key][0] < 3:
+                    if guesses[key][1] - guesses[key][0] < 100:
+                        self.change_ids[key] = guesses[key][0]
                         guesses[key][2] = 2
                         guesses[key][3] = False
 
