@@ -10,7 +10,7 @@ import time
 from ..Singleton import Singleton
 from ..Log import Log
 
-class Trade_API(metaclass=Singleton):
+class TradeAPI(metaclass=Singleton):
 
     poe_trade_url = "http://www.pathofexile.com/api/public-stash-tabs"
 
@@ -132,7 +132,6 @@ class Trade_API(metaclass=Singleton):
             server_change_ids = [int(x) for x in server_change_ids]
             # print(server_change_ids)
 
-
             # Process results
             for key in guesses:
                 if guesses[key][2] == 0:
@@ -165,3 +164,9 @@ class Trade_API(metaclass=Singleton):
                 elif guesses[key][2] == 2:
                     pass
                     # We already locked our target
+
+"""Notes:
+
+    Check out https://poe.ninja/api/Data/GetStats, it gives us the current next ID!!
+
+"""
