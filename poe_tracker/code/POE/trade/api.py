@@ -7,8 +7,9 @@ import sys
 import time
 import time
 
-from ..Singleton import Singleton
-from ..Log import Log
+from ...Singleton import Singleton
+from ...Log import Log
+from .sql import Sql
 
 class TradeAPI(metaclass=Singleton):
 
@@ -17,6 +18,7 @@ class TradeAPI(metaclass=Singleton):
     def __init__(self):
 
         self.log = Log()
+        self.sql = Sql('trade_test.db')
 
         # Set to True when we sync with the current change_ids on the server
         self.synced = False
@@ -40,7 +42,7 @@ class TradeAPI(metaclass=Singleton):
             self.poe_trade_url,
             params={"id":self.gen_change_id()},
             )
-
+        self.log.info(self.gen_change_id())
         # print(r.headers['X-Rate-Limit-Ip'])
         # print(r.headers['X-Rate-Limit-Ip-State'])
         try:
@@ -50,6 +52,7 @@ class TradeAPI(metaclass=Singleton):
                 # print(r.headers)
                 # exit()
                 time.sleep(0.5)
+            r.raise_for_status()
         except Exception as e:
             print(r)
             print(r.status_code)
@@ -58,6 +61,23 @@ class TradeAPI(metaclass=Singleton):
         self.last_data_pull = time.time()
         self.data = r.json()
         self.data_size = sys.getsizeof(r.text)
+
+        for stash in self.data['stashes']:
+            if len(stash['items']) == 0:
+                continue
+            self.sql.upsert_stash(stash)
+            for item in stash['items']:
+                if 'note' not in item:
+                    continue
+                if not item['note'].startswith("~"):
+                    continue
+                try:
+                    item['note'].encode().decode('ascii')
+                except UnicodeDecodeError:
+                    continue
+                if item['extended']['category'] != "currency":
+                    continue
+                self.sql.upsert_item(item, stash)
 
 
     def gen_change_id(self):

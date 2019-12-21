@@ -1,12 +1,23 @@
 #!/usr/bin/env python3.7
-from poe_tracker.code.POE.trade_api import Trade_API
+from poe_tracker.code.POE.trade.api import TradeAPI
+from poe_tracker.code.Log import Log
 from pprint import pprint
 import datetime
 import time
 import json
 import os
 
-x = Trade_API()
+
+class Object(object):
+    pass
+
+args = Object()
+args.name = "test"
+args.log_level = "INFO"
+
+log = Log(args)
+
+x = TradeAPI()
 t = datetime.datetime.now()
 x.sync_change_ids()
 # exit()
@@ -28,22 +39,28 @@ for data in x.iter_data():
     # print(f"Saw {item_count:,d} itemes")
     # print(f"Total of {byte_count/(2**10):,.0f} KiB")
     # print(x.gen_change_id())
-    for stash in data['stashes']:
-        for item in stash['items']:
-            if 'note' not in item:
-                continue
-            print()
-            print()
-            print()
-            print()
-            os.system("clear")
-            pprint(item)
-            input()
+    # for stash in data['stashes']:
+    #     if len(stash['items']) == 0:
+    #         continue
+    #     for item in stash['items']:
+    #         if 'note' not in item:
+    #             continue
+    #         if item['extended']['category'] != "currency":
+    #             continue
+    #         print()
+    #         print()
+    #         print()
+    #         print()
+    #         os.system("clear")
+    #         pprint({i:stash[i] for i in stash if i!='items'})
+    #         pprint(item)
+    #         print(stash['id'])
+    #         input()
 
-    for stash in data['stashes']:
-        try:
-            if stash['accountName'].lower() == 'jmurrayufo':
-                print(datetime.datetime.now())
-                # print(stash)
-        except AttributeError:
-            pass
+    # for stash in data['stashes']:
+    #     try:
+    #         if stash['accountName'].lower() == 'jmurrayufo':
+    #             log.info("Saw your stash update!")
+    #             input()
+    #     except AttributeError:
+    #         pass
