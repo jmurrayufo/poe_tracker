@@ -34,7 +34,7 @@ class Account:
         """
         acct_url = self.acct_url.format(self.accountName)
         r = requests.get(acct_url)
-        self._headers = r._headers
+        self._headers = r.headers
         if r.status_code == 200:
             return True
         return False
