@@ -103,6 +103,11 @@ class Sql:
 
     def upsert_stash(self, stash_dict):
 
+        if stash_dict['league'] is None:
+            self.log.error("Found a stash dict with no league? WTF?!")
+            self.log.error(stash_dict)
+            exit()
+
         cmd = r"""
         INSERT OR REPLACE INTO stashes (
             timestamp,
@@ -127,7 +132,7 @@ class Sql:
             )
         )
         self.commit()
-        self.log.info(f"Inserted STASH {stash_dict['id'][:5]}... {stash_dict['accountName']}->{stash_dict['stash']}")
+        # self.log.info(f"Inserted STASH {stash_dict['id'][:5]}... {stash_dict['accountName']}->{stash_dict['stash']}")
 
     def upsert_item(self, item_dict, stash_dict):
         self.log.info(f"Inserted CURRENCY {item_dict['name']}{stash_dict['id'][:5]}... {stash_dict['accountName']}->{stash_dict['stash']}")
