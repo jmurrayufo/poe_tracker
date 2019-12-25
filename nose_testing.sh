@@ -1,3 +1,3 @@
 #!/bin/bash
 
-pipenv run python -m nose --nologcapture --with-timer
+pipenv run python -m nose --with-timer

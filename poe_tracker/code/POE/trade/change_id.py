@@ -145,3 +145,10 @@ class ChangeID:
             return ChangeID([a**other for a in self.ids])
         return NotImplemented
 
+    
+    def __getitem__(self, key):
+        return self.ids[key]
+
+    def __setitem__(self, key, value):
+        # Give a good college try to make that value an int!
+        self.ids[key] = int(float(value))
