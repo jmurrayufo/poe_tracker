@@ -9,16 +9,17 @@ import time
 
 from ...Singleton import Singleton
 from ...Log import Log
-from .sql import Sql
+
+from .change_id import ChangeID
 
 class TradeAPI(metaclass=Singleton):
 
     poe_trade_url = "http://www.pathofexile.com/api/public-stash-tabs"
 
-    def __init__(self):
+    def __init__(self, poesessid=None):
 
         self.log = Log()
-        self.sql = Sql('trade_test.db')
+        self.poesessid = poesessid
 
         # Set to True when we sync with the current change_ids on the server
         self.synced = False
@@ -38,11 +39,14 @@ class TradeAPI(metaclass=Singleton):
         # TODO: Consider checking this header and delaying after call?
         # if r.headers['X-Rate-Limit-Ip-State'][0] == '2':
         # time.sleep(max(0, 0.5 - (time.time() - self.last_data_pull )))
+        # self.log.info("Pulling data...")
         r = requests.get(
             self.poe_trade_url,
             params={"id":self.gen_change_id()},
+            headers={"Cookie": f"POESESSID={self.poesessid}"}
             )
-        self.log.info(self.gen_change_id())
+        # self.log.info(self.gen_change_id())
+        # print(r.headers)
         # print(r.headers['X-Rate-Limit-Ip'])
         # print(r.headers['X-Rate-Limit-Ip-State'])
         try:
@@ -51,6 +55,7 @@ class TradeAPI(metaclass=Singleton):
                 # print(r.text)
                 # print(r.headers)
                 # exit()
+                # self.log.warning("Sleeping to avoid lockout")
                 time.sleep(0.5)
             r.raise_for_status()
         except Exception as e:
@@ -62,23 +67,6 @@ class TradeAPI(metaclass=Singleton):
         self.data = r.json()
         self.data_size = sys.getsizeof(r.text)
 
-        for stash in self.data['stashes']:
-            if len(stash['items']) == 0:
-                continue
-            self.sql.upsert_stash(stash)
-            for item in stash['items']:
-                if 'note' not in item:
-                    continue
-                if not item['note'].startswith("~"):
-                    continue
-                try:
-                    item['note'].encode().decode('ascii')
-                except UnicodeDecodeError:
-                    continue
-                if item['extended']['category'] != "currency":
-                    continue
-                self.sql.upsert_item(item, stash)
-
 
     def gen_change_id(self):
         return f"{'-'.join(str(x) for x in self.change_ids)}"
@@ -87,12 +75,15 @@ class TradeAPI(metaclass=Singleton):
     def iter_data(self):
         while 1:
             self.pull_data()
-            yield self.data
             self.set_next_change_id()
+            yield self.data
 
 
-    def set_next_change_id(self):
-        server_next_change_id = self.data['next_change_id']
+    def set_next_change_id(self, new_change_id=None):
+        if new_change_id:
+            server_next_change_id = new_change_id
+        else:
+            server_next_change_id = self.data['next_change_id']
         server_change_ids = re.match(r"(\d+)-(\d+)-(\d+)-(\d+)-(\d+)", server_next_change_id).groups()
         self.change_ids = [int(x) for x in server_change_ids] 
 
@@ -105,7 +96,7 @@ class TradeAPI(metaclass=Singleton):
         #   0: find upper bound, double max each bad guess.
         #   1: Binary isolation
         #   2: Target locked
-        print("Lets guess")
+        # print("Lets guess")
         guesses = {}
         # Initial guesses are setup to be the current change IDs. This will allow rapid catchup!
         guesses[0] = [self.change_ids[0],self.change_ids[0],0,True]
@@ -115,15 +106,15 @@ class TradeAPI(metaclass=Singleton):
         guesses[4] = [self.change_ids[4],self.change_ids[4],0,True]
 
         while 1:
-            print()
+            # print()
             for key in guesses:
                 if guesses[key][3]:
                     break
             else:
-                print("All keys locked, break")
+                # print("All keys locked, break")
                 break
 
-            print("Still keys to find!")
+            # print("Still keys to find!")
 
             # Set current self.change_ids based on direction of guesses
             # Hit poe_trade_url
@@ -144,7 +135,8 @@ class TradeAPI(metaclass=Singleton):
             # pprint(guesses)
             for key in guesses:
                 # print(f"[{key}] {math.log(guesses[key][1]-guesses[key][0],2):.3f} {guesses[key][2]} {guesses[key][3]}")
-                print(f"[{key}] {guesses[key][1]-guesses[key][0]:,d} {guesses[key][2]} {guesses[key][3]}")
+                # print(f"[{key}] {guesses[key][1]-guesses[key][0]:,d} {guesses[key][2]} {guesses[key][3]}")
+                pass
 
             self.pull_data()
             server_next_change_id = self.data['next_change_id']
