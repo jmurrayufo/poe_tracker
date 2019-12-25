@@ -1,5 +1,6 @@
 
 import requests
+import httpx
 
 class ChangeID:
 
@@ -27,6 +28,14 @@ class ChangeID:
         """Pull current value from poe.ninja/stats
         """
         request = requests.get("https://poe.ninja/api/Data/GetStats")
+        request.raise_for_status()
+        data = request.json()
+        self.ids = [int(i) for i in data['next_change_id'].split("-")]
+
+    async def async_poe_ninja(self):
+        """Pull current value from poe.ninja/stats
+        """
+        request = await httpx.get("https://poe.ninja/api/Data/GetStats")
         request.raise_for_status()
         data = request.json()
         self.ids = [int(i) for i in data['next_change_id'].split("-")]
