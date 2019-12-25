@@ -25,6 +25,7 @@ class TradeAPI(metaclass=Singleton):
         self.synced = False
         # This is a 5 element list of the current change IDs
         self.change_ids = [1,1,1,1,1]
+        self.next_change_id = ChangeID()
         self.data = {}
         self.data_size = 0
         self.last_data_pull = time.time()
@@ -69,6 +70,7 @@ class TradeAPI(metaclass=Singleton):
 
 
     def gen_change_id(self):
+        return str(self.next_change_id)
         return f"{'-'.join(str(x) for x in self.change_ids)}"
 
 
@@ -78,7 +80,6 @@ class TradeAPI(metaclass=Singleton):
             self.set_next_change_id()
             yield self.data
 
-
     def set_next_change_id(self, new_change_id=None):
         if new_change_id:
             server_next_change_id = new_change_id
@@ -86,6 +87,11 @@ class TradeAPI(metaclass=Singleton):
             server_next_change_id = self.data['next_change_id']
         server_change_ids = re.match(r"(\d+)-(\d+)-(\d+)-(\d+)-(\d+)", server_next_change_id).groups()
         self.change_ids = [int(x) for x in server_change_ids] 
+        self.next_change_id = ChangeID(server_next_change_id)
+
+
+    def sync_poe_ninja(self):
+        self.next_change_id.sync_poe_ninja()
 
 
     def sync_change_ids(self):

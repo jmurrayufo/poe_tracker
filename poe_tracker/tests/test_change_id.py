@@ -56,4 +56,15 @@ class TestStringMethods(unittest.TestCase):
         #y.sync_poe_ninja()
         #assert_not_equal(x,y)
 
+    def test_get_set(self):
+        x = ChangeID()
+        x[0] = 9
+        x[1] = 9
+        x[2] = 9
+        x[3] = 9
+        x[4] = 9
+        assert_equal(x, ChangeID(9,9,9,9,9))
+        with assert_raises(IndexError):
+            x[5]
 
+        

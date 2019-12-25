@@ -17,6 +17,8 @@ class Object(object):
     pass
 
 def Mongo(stash_queue):
+    from poe_tracker.code.POE.trade import ChangeID
+
     import pymongo
 
     client = pymongo.MongoClient('atlas.lan:27017', username='poe', password='poe', authSource='path_of_exile')
@@ -24,6 +26,8 @@ def Mongo(stash_queue):
     stash_operations = []
     item_operations = []
     config_operation = None
+    last_good_change_id = ChangeID()
+    last_poe_ninja_update = time.time()
 
     # Seconds between writes
 
@@ -40,6 +44,7 @@ def Mongo(stash_queue):
                     {'current_next_id':stashes['next_change_id']}
                 }
             )
+            last_good_change_id = ChangeID(stashes['next_change_id'])
 
             for stash in stashes['stashes']:
                 stash_sub_dict = {i:stash[i] for i in stash if i!='items'}
@@ -57,7 +62,10 @@ def Mongo(stash_queue):
                         pymongo.UpdateOne(
                             {"id":item['id']},
                             {
-                                "$setOnInsert": {"_createdAt": datetime.datetime.utcnow()},
+                                "$setOnInsert": {
+                                    "_createdAt": datetime.datetime.utcnow(),
+                                    "_sold": False
+                                },
                                 "$set": {**item, "_updatedAt": datetime.datetime.utcnow()}
                             },
                             upsert=True
@@ -76,7 +84,6 @@ def Mongo(stash_queue):
                 )
 
         if (len(stash_operations) and len(item_operations)):
-            t1 = time.time()
             try:
                 stash_result = db.stashes.bulk_write(stash_operations, ordered=False)
                 item_result = db.items.bulk_write(item_operations, ordered=False)
@@ -84,12 +91,16 @@ def Mongo(stash_queue):
                 print("Expereinced bulk_write error, sleeping")
                 time.sleep(5)
             else:
-                t2 = time.time()
                 print()
                 print(stash_result.modified_count, stash_result.upserted_count)
                 print(item_result.modified_count, item_result.upserted_count)
                 print(stash_queue.qsize())
-                # print(t2-t1)
+                if time.time() - last_poe_ninja_update > 30:
+                    poe_ninja_change_id = ChangeID()
+                    poe_ninja_change_id.sync_poe_ninja()
+                    print(f"ChangeID delta: {poe_ninja_change_id-last_good_change_id}")
+                    last_poe_ninja_update = time.time()
+                print(f"ChangeID: {last_good_change_id}")
                 stash_operations = []
                 item_operations = []
 
@@ -109,10 +120,10 @@ def MongoCleaner():
 
     updated_pointer = config['filter_updated_pointer']
 
-    if datetime.datetime.utcnow() - updated_pointer < datetime.timedelta(minutes=5): 
+    if datetime.datetime.utcnow() - updated_pointer < datetime.timedelta(minutes=15): 
         return
 
-    print(f"Currently rently {datetime.datetime.utcnow() - updated_pointer} behind")
+    print(f"Currently {datetime.datetime.utcnow() - updated_pointer} behind")
 
     start_update = time.time()
 
@@ -141,6 +152,7 @@ def MongoCleaner():
 
 
 def POE(stash_queue):
+    from poe_tracker.code.POE.trade import ChangeID
     from poe_tracker.code.POE.trade.api import TradeAPI
     from poe_tracker.code.POE.trade.item import ItemGenerator
 
@@ -162,6 +174,7 @@ def POE(stash_queue):
     # print("Syncing (this might take a while)")
     # x.sync_change_ids()
     x.set_next_change_id(config['current_next_id'])
+    # x.sync_poe_ninja()
 
     for data in x.iter_data():
         stash_queue.put(data)
