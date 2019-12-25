@@ -21,17 +21,14 @@ class TradeAPI(metaclass=Singleton):
         self.log = Log()
         self.poesessid = poesessid
 
-        # Set to True when we sync with the current change_ids on the server
-        self.synced = False
         # This is a 5 element list of the current change IDs
-        self.change_ids = [1,1,1,1,1]
         self.next_change_id = ChangeID()
         self.data = {}
         self.data_size = 0
         self.last_data_pull = time.time()
 
 
-    def pull_data(self):
+    async def pull_data(self):
         """
         Update data from the API.
         """
@@ -71,12 +68,11 @@ class TradeAPI(metaclass=Singleton):
 
     def gen_change_id(self):
         return str(self.next_change_id)
-        return f"{'-'.join(str(x) for x in self.change_ids)}"
 
 
-    def iter_data(self):
+    async def iter_data(self):
         while 1:
-            self.pull_data()
+            await self.pull_data()
             self.set_next_change_id()
             yield self.data
 
@@ -85,13 +81,11 @@ class TradeAPI(metaclass=Singleton):
             server_next_change_id = new_change_id
         else:
             server_next_change_id = self.data['next_change_id']
-        server_change_ids = re.match(r"(\d+)-(\d+)-(\d+)-(\d+)-(\d+)", server_next_change_id).groups()
-        self.change_ids = [int(x) for x in server_change_ids] 
         self.next_change_id = ChangeID(server_next_change_id)
 
 
-    def sync_poe_ninja(self):
-        self.next_change_id.sync_poe_ninja()
+    async def sync_poe_ninja(self):
+        await self.next_change_id.async_poe_ninja()
 
 
     def sync_change_ids(self):
@@ -103,6 +97,10 @@ class TradeAPI(metaclass=Singleton):
         #   1: Binary isolation
         #   2: Target locked
         # print("Lets guess")
+
+        # This need to be converted over to async
+        return NotImplemented
+
         guesses = {}
         # Initial guesses are setup to be the current change IDs. This will allow rapid catchup!
         guesses[0] = [self.change_ids[0],self.change_ids[0],0,True]
