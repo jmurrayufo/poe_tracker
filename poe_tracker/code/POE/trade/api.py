@@ -3,9 +3,11 @@ from pprint import pprint
 import math
 import re
 import requests
+import httpx
 import sys
 import time
 import time
+import asyncio
 
 from ...Singleton import Singleton
 from ...Log import Log
@@ -38,11 +40,18 @@ class TradeAPI(metaclass=Singleton):
         # if r.headers['X-Rate-Limit-Ip-State'][0] == '2':
         # time.sleep(max(0, 0.5 - (time.time() - self.last_data_pull )))
         # self.log.info("Pulling data...")
-        r = requests.get(
-            self.poe_trade_url,
-            params={"id":self.gen_change_id()},
-            headers={"Cookie": f"POESESSID={self.poesessid}"}
-            )
+
+        try:
+            r = await httpx.get(
+                self.poe_trade_url,
+                params={"id":self.gen_change_id()},
+                headers={"Cookie": f"POESESSID={self.poesessid}"},
+                timeout=10
+                )
+        except httpx.exceptions.ReadTimeout:
+            return False
+        except httpx.exceptions.ConnectTimeout:
+            return False
         # self.log.info(self.gen_change_id())
         # print(r.headers)
         # print(r.headers['X-Rate-Limit-Ip'])
@@ -53,17 +62,18 @@ class TradeAPI(metaclass=Singleton):
                 # print(r.text)
                 # print(r.headers)
                 # exit()
-                # self.log.warning("Sleeping to avoid lockout")
-                time.sleep(0.5)
+                self.log.warning("Sleeping to avoid lockout")
+                await asyncion.sleep(0.5)
             r.raise_for_status()
         except Exception as e:
             print(r)
             print(r.status_code)
             print(e)
-            return
+            return False
         self.last_data_pull = time.time()
         self.data = r.json()
         self.data_size = sys.getsizeof(r.text)
+        return True
 
 
     def gen_change_id(self):
@@ -72,7 +82,9 @@ class TradeAPI(metaclass=Singleton):
 
     async def iter_data(self):
         while 1:
-            await self.pull_data()
+            if not await self.pull_data():
+                await asyncio.sleep(1)
+                continue
             self.set_next_change_id()
             yield self.data
 
