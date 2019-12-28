@@ -37,6 +37,7 @@ class POE:
 
 
     async def on_ready(self):
+        # Create the POE loop to handle background activities
         asyncio.create_task(POE_Loop(60, self.args).loop())
 
         await self.poe_sql.table_setup()
