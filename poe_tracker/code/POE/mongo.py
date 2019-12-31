@@ -108,6 +108,11 @@ class Mongo(metaclass=Singleton):
             name="id",
             unique=True,
             )
+        self.log.info("Create 'id_hashed' index")
+        await self.db.items.create_index(
+            [('id', 'hashed')],
+            name="id_hashed",
+            )
         self.log.info("Create 'league' index")
         await self.db.items.create_index(
             [('league', 1)],
@@ -174,7 +179,7 @@ class Mongo(metaclass=Singleton):
 
         # db.stashes
         self.log.info("Setup db.stashes")
-        self.log.info("Init items indexes")
+        self.log.info("Init stashes indexes")
         self.log.info("Create 'createdAt' index")
         await self.db.stashes.create_index(
             [('_createdAt', 1)],
@@ -186,11 +191,16 @@ class Mongo(metaclass=Singleton):
             name="updatedAt",
             expireAfterSeconds=604_800, # 1 Week
             )
+        self.log.info("Create 'id_hashed' index")
+        await self.db.stashes.create_index(
+            [('id', 'hashed')],
+            name="id_hashed",
+            )
         self.log.info("Create 'id' index")
         await self.db.stashes.create_index(
             [('id', 1)],
             name="id",
-            unique=True
+            unique=True,
             )
 
 
