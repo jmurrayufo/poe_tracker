@@ -1,14 +1,14 @@
-#!/usr/bin/env python3.7
+#!/usr/bin/env python
 
 import pymongo
 from poe_tracker.code.Log import Log
-from poe_tracker.code.POE.trade.price import Price
 from pprint import pprint
 import time
 import datetime
 import os
 import re
 
+# SIMPLE SETUP, DON'T REMOVE
 class Object:
     pass
 
@@ -16,48 +16,19 @@ args = Object()
 args.name = "test"
 args.log_level = "INFO"
 
-# Do simple setup
 log = Log(args)
 
-client = pymongo.MongoClient('atlas.lan:27017', username='poe', password='poe', authSource='path_of_exile')
-db = client.path_of_exile
-
-i_mods = []
-e_mods = []
-
-re_pat = re.compile("\d+(?:.\d+)?")
-
-def parse_mod(mod, _type):
-    (mod, numbers) = re_pat.subn("X",mod)
-    if db.mod_lookup.count_documents({"name":mod, "type":_type}):
-        return
-    next_id = db.index_markers.find_one_and_update(
-        {"type":_type+"Mods"},
-        {"$inc": {"next_id":max(1,numbers)}}
-        )['next_id']
-    # print(next_id)
-
-    db.mod_lookup.insert_one(
-        {"name":mod, 
-         "id":next_id, 
-         "type":_type,
-         "numbers":numbers}
-        )
+# SIMPLE SETUP, DON'T REMOVE
 
 
-    # print(mod)
-i = 0
-for item in db.items.find({}):
-    print(i, datetime.datetime.utcnow() - item['_createdAt'])
-    i += 1
-    if "explicitMods" in item:
-        for mod in item['explicitMods']:
-            parse_mod(mod, "explicit")
-    if "implicitMods" in item:
-        for mod in item['implicitMods']:
-            parse_mod(mod, "implicit")
 
+# client = pymongo.MongoClient('atlas.lan:27017', username='poe', password='poe', authSource='path_of_exile')
+# db = client.path_of_exile
 
+# db.example.subexample.insert_one({"test":True})
+
+# db.example.subexample2.insert_one({"test":True})
+# db.example.subexample3.insert_one({"test":True})
 
 # print("Purging DB of currency")
 # db.currency.delete_many({})

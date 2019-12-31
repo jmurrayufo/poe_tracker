@@ -9,7 +9,9 @@ from ..CommandProcessor import DiscordArgumentParser, ValidUserAction
 from ..CommandProcessor.exceptions import NoValidCommands, HelpNeeded
 from ..Log import Log
 from ..SQL import SQL
-from . import POE_SQL, POE_Loop, Account, Character, Plotter
+from . import POE_SQL, POE_Loop, Account, Character, mongo
+from .plotter import Plotter
+from .trade import trade_loop
 
 class POE:
 
@@ -19,6 +21,7 @@ class POE:
         self.ready = False
         self.sql = SQL()
         self.poe_sql = POE_SQL()
+        self.mongo = mongo.Mongo()
         self.args = args
 
 
@@ -38,9 +41,12 @@ class POE:
 
     async def on_ready(self):
         # Create the POE loop to handle background activities
-        asyncio.create_task(POE_Loop(60, self.args).loop())
 
         await self.poe_sql.table_setup()
+        await self.mongo.setup()
+        
+        asyncio.create_task(POE_Loop(self.args).loop())
+        asyncio.create_task(trade_loop.Trade_Loop(self.args).loop())
 
         self.log.info("POE, ready to recieve commands!")
         self.ready = True

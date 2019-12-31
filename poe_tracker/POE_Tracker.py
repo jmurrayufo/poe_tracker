@@ -16,7 +16,7 @@ parser.add_argument('--name',
                     help='Name of this bot')
 
 parser.add_argument('--env',
-                    default="DEV",
+                    default="dev",
                     help='Name environment')
 
 parser.add_argument('--token',

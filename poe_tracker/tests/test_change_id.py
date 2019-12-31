@@ -2,7 +2,7 @@ from nose.tools import *
 import time
 import unittest
 
-from ..code.POE.trade import ChangeID
+from ..code.POE.trade.change_id import ChangeID
 
 class TestStringMethods(unittest.TestCase):
 

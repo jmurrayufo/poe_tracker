@@ -3,20 +3,23 @@ import asyncio
 import requests
 import time
 
+from . import POE_SQL, Account
 from ..Client import Client
+from ..Config import Config
 from ..Log import Log
 from ..SQL import SQL
-from . import POE_SQL, Account
 
 class POE_Loop:
 
     influxDB_host = "http://192.168.4.3:8086"
 
-    def __init__(self, sleep_time=300, args=None):
-        self.sleep_time = sleep_time
+    def __init__(self, args):
         self.log = Log()
         self.poe_sql = POE_SQL()
         self.args = args
+        self.config = Config()
+
+        self.sleep_time = self.config[self.args.env]['characters']['time_between_updates']
 
 
     async def loop(self):
@@ -25,6 +28,10 @@ class POE_Loop:
         """
         self.log.info(f"Booted loop and sleeping for {self.sleep_time}s")
         while 1:
+            # Check if we even need to follow characters
+            if not self.config[self.args.env]['characters']['track']:
+                self.log.warning("Config was set to not track characters. Aborting poe_loop.")
+                break
             try:
                 t1 = time.time()
                 self.log.debug("Begin loop")
@@ -54,12 +61,11 @@ class POE_Loop:
                 continue
             except:
                 self.log.exception("")
-            finally:
 
-                # Calculate out loop processing time, and sleep the remainder
-                # TODO: Doing this as a set time march would be better.
-                sleep_time = max(0, self.sleep_time - (time.time() - t1))
-                await asyncio.sleep(sleep_time)
+            # Calculate out loop processing time, and sleep the remainder
+            # TODO: Doing this as a set time march would be better.
+            sleep_time = max(0, self.sleep_time - (time.time() - t1))
+            await asyncio.sleep(sleep_time)
 
 
     async def post_char_to_influx(self, character):

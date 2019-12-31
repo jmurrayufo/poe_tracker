@@ -54,16 +54,13 @@ class TradeAPI(metaclass=Singleton):
             return False
         # self.log.info(self.gen_change_id())
         # print(r.headers)
-        # print(r.headers['X-Rate-Limit-Ip'])
-        # print(r.headers['X-Rate-Limit-Ip-State'])
+        self.log.debug(r.headers['X-Rate-Limit-Ip'])
+        self.log.debug(r.headers['X-Rate-Limit-Ip-State'])
         try:
-            if r.headers['X-Rate-Limit-Ip-State'][0] != '1':
-                # print(r.json())
-                # print(r.text)
-                # print(r.headers)
-                # exit()
-                self.log.warning("Sleeping to avoid lockout")
-                await asyncion.sleep(0.5)
+            if r.headers['X-Rate-Limit-Ip-State'][0] not in ['1','2']:
+                self.log.warning("Overran timeout")
+                await asyncio.sleep(0.5)
+                return False
             r.raise_for_status()
         except Exception as e:
             print(r)
@@ -83,7 +80,7 @@ class TradeAPI(metaclass=Singleton):
     async def iter_data(self):
         while 1:
             if not await self.pull_data():
-                await asyncio.sleep(1)
+                await asyncio.sleep(0)
                 continue
             self.set_next_change_id()
             yield self.data

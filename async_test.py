@@ -22,7 +22,7 @@ async def Mongo(stash_queue):
     db = client.path_of_exile
     stash_operations = []
     item_operations = []
-    config_operation = None
+    cache_operation = None
     last_good_change_id = ChangeID()
     last_poe_ninja_update = time.time()
     log = Log()
@@ -32,8 +32,8 @@ async def Mongo(stash_queue):
     while 1:
         if stash_queue.qsize():
             stashes = await stash_queue.get()
-            config_operation = pymongo.UpdateOne(
-                {"current_next_id": {"$exists":1}},
+            cache_operation = pymongo.UpdateOne(
+                {"name": "trade"},
                 {'$set': 
                     {'current_next_id':stashes['next_change_id']}
                 }
@@ -50,6 +50,7 @@ async def Mongo(stash_queue):
                     item['stash_id'] = stash['id']
                     item.pop("descrText", None)
                     item.pop("flavourText", None)
+                    item.pop("icon", None)
 
                     try:
                         stash_sub_dict['items'].append(item['id'])
@@ -96,30 +97,32 @@ async def Mongo(stash_queue):
                     # log.info(f"{stash_queue.qsize()}")
                     if time.time() - last_poe_ninja_update > 30:
                         poe_ninja_change_id = ChangeID()
-                        poe_ninja_change_id.sync_poe_ninja()
+                        await poe_ninja_change_id.async_poe_ninja()
                         log.info(f"ChangeID delta: {poe_ninja_change_id-last_good_change_id}")
                         last_poe_ninja_update = time.time()
                     log.info(f"ChangeID: {last_good_change_id}")
                     stash_operations = []
                     item_operations = []
 
-            if config_operation:
-                await db.config.bulk_write([config_operation,])
-                config_operation = None
+            if cache_operation:
+                await db.cache.bulk_write([cache_operation,])
+                cache_operation = None
         else:
             await asyncio.sleep(1)
         await MongoCleaner()
 
 async def MongoCleaner():
-    import pymongo
+    # import pymongo
+    import motor
     log = Log()
 
-    client = pymongo.MongoClient('atlas.lan:27017', username='poe', password='poe', authSource='path_of_exile')
+    # client = pymongo.MongoClient('atlas.lan:27017', username='poe', password='poe', authSource='path_of_exile')
+    client = motor.motor_asyncio.AsyncIOMotorClient('atlas.lan:27017', username='poe', password='poe', authSource='path_of_exile')
     db = client.path_of_exile
 
-    config = db.config.find_one()
+    cache = await db.cache.find_one({"name":"trade"})
 
-    updated_pointer = config['filter_updated_pointer']
+    updated_pointer = cache['filter_updated_pointer']
 
     if datetime.datetime.utcnow() - updated_pointer < datetime.timedelta(minutes=15): 
         return
@@ -131,7 +134,7 @@ async def MongoCleaner():
     element = 0
     sold = 0
     t1 = time.time()
-    for stash in db.stashes.find({"_updatedAt": {"$gt": updated_pointer}}, sort=[('_updatedAt', 1)]):
+    async for stash in db.stashes.find({"_updatedAt": {"$gt": updated_pointer}}, sort=[('_updatedAt', 1)]):
         if time.time() - start_update > 10:
             log.warning("Timeout reached...")
             break
@@ -140,7 +143,7 @@ async def MongoCleaner():
 
         #TODO: Copy currency items up to the currency DB
 
-        results = db.items.delete_many(
+        results = await db.items.delete_many(
             {
                 "stash_id":stash['id'],
                 "id": {"$not":{"$in": stash['items']}}
@@ -150,7 +153,7 @@ async def MongoCleaner():
 
         element += len(stash['items'])
 
-    db.config.update_one({},{"$set":{"filter_updated_pointer":updated_pointer}})
+    await db.cache.update_one({"name":"trade"},{"$set":{"filter_updated_pointer":updated_pointer}})
     log.info(f"Loop took {datetime.timedelta(seconds=time.time()-t1)} ({element/(time.time()-t1):,.0f} stashes/s). Found {sold}/{element} missing items. Currently {datetime.datetime.utcnow() - updated_pointer} behind")
 
 
@@ -168,20 +171,20 @@ async def POE(stash_queue):
     client = pymongo.MongoClient('atlas.lan:27017', username='poe', password='poe', authSource='path_of_exile')
     db = client.path_of_exile
 
-    config = db.config.find_one()
-
+    cache = db.cache.find_one({"name":"trade"})
 
     x = TradeAPI() # We should move this someplace secure...
     # print("Syncing (this might take a while)")
     # x.sync_change_ids()
-    x.set_next_change_id(config['current_next_id'])
+    x.set_next_change_id(cache['current_next_id'])
     # x.sync_poe_ninja()
 
     async for data in x.iter_data():
         await stash_queue.put(data)
         # Allow other tasks to run
-        await asyncio.sleep(0)
+        await asyncio.sleep((stash_queue.qsize()/100)**2)
         log.info(f"POE: {stash_queue.qsize()}")
+
 
 class Object:
     pass
