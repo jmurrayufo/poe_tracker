@@ -32,7 +32,7 @@ class Trade_Loop:
         """
         self.log.info(f"Booted trade loop")
         if not self.config[self.args.env]['trade']['track']:
-            self.log.warning("Config was set to not track characters. Aborting poe_loop.")
+            self.log.warning("Config was set to not track trading. Aborting poe_loop.")
             return
         ingest_to_db_task = asyncio.create_task(self.ingest_to_db())
         queue_stash_task = asyncio.create_task(self.queue_up_stashes())
@@ -58,8 +58,8 @@ class Trade_Loop:
                     return
                 except Exception as e:
                     self.log.exception("Task threw exception")
-                self.log.info("Restarting POE")
-                queue_stash_task = asyncio.create_task(self.POE())
+                self.log.info("Restarting queue_up_stashes")
+                queue_stash_task = asyncio.create_task(self.queue_up_stashes())
 
             if cleaner_task.done():
                 try:
@@ -113,7 +113,7 @@ class Trade_Loop:
         last_good_change_id = ChangeID()
         last_poe_ninja_update = time.time()
 
-        # Seconds between writes
+        self.log.info("Begin ingesting items/stashes into DB")
 
         while 1:
             if self.stash_queue.qsize():
@@ -127,7 +127,8 @@ class Trade_Loop:
                 last_good_change_id = ChangeID(stashes['next_change_id'])
 
                 for stash in stashes['stashes']:
-                    stash_sub_dict = copy.deepcopy(stash)
+                    # stash_sub_dict = copy.deepcopy(stash)
+                    stash_sub_dict = {k:stash[k] for k in stash if k != 'items'}
                     stash_sub_dict['items'] = []
 
                     for item in stash['items']:
@@ -188,6 +189,7 @@ class Trade_Loop:
                         stash_operations = []
                         item_operations = []
 
+
                 if cache_operation:
                     await self.db.cache.bulk_write([cache_operation,])
                     cache_operation = None
@@ -196,11 +198,12 @@ class Trade_Loop:
 
 
     async def cleaner(self):
+        self.log.info("Begin cleaning updated items")
         while 1:
 
             updated_pointer = (await self.db.cache.find_one({"name":"trade"}))['filter_updated_pointer']
 
-            self.log.info(f"Currently {datetime.datetime.utcnow() - updated_pointer} behind")
+            # self.log.info(f"Currently {datetime.datetime.utcnow() - updated_pointer} behind")
 
             while (datetime.datetime.utcnow() - updated_pointer) < datetime.timedelta(minutes=15):
                 await asyncio.sleep(15)
@@ -228,7 +231,7 @@ class Trade_Loop:
                 element += len(stash['items'])
 
             await self.db.cache.update_one({"name":"trade"},{"$set":{"filter_updated_pointer":updated_pointer}})
-            # self.log.info(f"Loop took {datetime.timedelta(seconds=time.time()-t1)} ({element/(time.time()-t1):,.0f} stashes/s). Found {sold}/{element} missing items. Currently {datetime.datetime.utcnow() - updated_pointer} behind")
+            self.log.info(f"Loop took {datetime.timedelta(seconds=time.time()-t1)} ({element/(time.time()-t1):,.0f} stashes/s). Found {sold}/{element} missing items. Currently {datetime.datetime.utcnow() - updated_pointer} behind")
             await asyncio.sleep(1)
 
 
