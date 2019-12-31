@@ -1,0 +1,20 @@
+{
+    "dev": {
+        "characters": {
+            "track": false,
+            "time_between_updates": 60
+        },
+        "trade": {
+            "track": true
+        }
+    },
+    "prod": {
+        "characters": {
+            "track": true,
+            "time_between_updates": 60
+        },
+        "trade": {
+            "track": true
+        }
+    }
+}

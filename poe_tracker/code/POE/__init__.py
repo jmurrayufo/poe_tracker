@@ -5,7 +5,7 @@ from .item import ItemBase, ItemButler
 from .character import Character
 from .account import Account
 
-from .plotter import Plotter
+# from .plotter import Plotter
 
 from .poe_loop import POE_Loop
 

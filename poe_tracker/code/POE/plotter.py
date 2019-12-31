@@ -3,15 +3,12 @@ import datetime as dt
 import discord
 import humanize
 import io
+import matplotlib
 import numpy as np
 import time
 
 from ..Log import Log
 from . import POE_SQL
-
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 
 
 class Plotter:
@@ -24,6 +21,18 @@ class Plotter:
 
 
     async def plot_character(self, characters, channel):
+        # Not the best form, but matplotlib likes to fill our tests full of errors if we 
+        # import this on module import...
+        
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+
+        class CustomYFormatter(matplotlib.ticker.Formatter):
+            def __call__(self, x, pos=None):
+                return humanize.intword(x, "%.3f")
+
+            def format_data(self, value):
+                return humanize.intword(value, "%.3f")
 
         self.log.info(characters)
         self.log.info(self.args)
@@ -92,14 +101,7 @@ class Plotter:
         message = f"Plotting for characters: {', '.join(characters_plotted)}"
         await channel.send(message, file=f)
 
-class CustomYFormatter(matplotlib.ticker.Formatter):
 
-
-    def __call__(self, x, pos=None):
-        return humanize.intword(x, "%.3f")
-
-    def format_data(self, value):
-        return humanize.intword(value, "%.3f")
 
 """
 import io
