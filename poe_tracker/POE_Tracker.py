@@ -1,34 +1,17 @@
 #!/usr/bin/env python
 
 import os
-import argparse
 
 from .code.Client import Client
 from .code.Log import Log
 from .code.SQL import SQL
 from .code.POE import POE
+from .code.args import Args
 # from .code.Stats import Stats
 
 def main():
-    parser = argparse.ArgumentParser(description='Basic Bot Demo')
 
-    parser.add_argument('--name',
-                        default="POEBot",
-                        help='Name of this bot')
-
-    parser.add_argument('--env',
-                        default="dev",
-                        help='Name environment')
-
-    parser.add_argument('--token',
-                        help='Token to use to login')
-
-    parser.add_argument('--log-level',
-                        choices=['INFO', 'DEBUG'],
-                        default='INFO',
-                        help='Token to use to login')
-
-    args = parser.parse_args()
+    args = Args()
 
     log = Log(args)
 

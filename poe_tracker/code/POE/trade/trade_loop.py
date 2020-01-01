@@ -180,7 +180,7 @@ class Trade_Loop:
                         # self.log.info(f"Stashes: Mod: {stash_result.modified_count:,d} Up: {stash_result.upserted_count:,d}")
                         # self.log.info(f"  Items: Mod: {item_result.modified_count:,d} Up: {item_result.upserted_count:,d}")
                         # self.log.info(f"{self.stash_queue.qsize()}")
-                        if time.time() - last_poe_ninja_update > 30:
+                        if time.time() - last_poe_ninja_update > 60:
                             poe_ninja_change_id = ChangeID()
                             await poe_ninja_change_id.async_poe_ninja()
                             self.log.info(f"ChangeID delta: {poe_ninja_change_id-last_good_change_id}")
@@ -191,6 +191,7 @@ class Trade_Loop:
 
 
                 if cache_operation:
+                    await last_good_change_id.post_to_influx()
                     await self.db.cache.bulk_write([cache_operation,])
                     cache_operation = None
             else:
@@ -231,8 +232,8 @@ class Trade_Loop:
                 element += len(stash['items'])
 
             await self.db.cache.update_one({"name":"trade"},{"$set":{"filter_updated_pointer":updated_pointer}})
-            self.log.info(f"Loop took {datetime.timedelta(seconds=time.time()-t1)} ({element/(time.time()-t1):,.0f} stashes/s). Found {sold}/{element} missing items. Currently {datetime.datetime.utcnow() - updated_pointer} behind")
-            await asyncio.sleep(1)
+            self.log.info(f"Cleaning {element/(time.time()-t1):,.0f} stashes/s. Found {sold:,d}/{element:,d} missing items. Currently {datetime.datetime.utcnow() - updated_pointer} behind")
+            # await asyncio.sleep(1)
 
 
     async def queue_up_stashes(self):

@@ -4,6 +4,7 @@ import httpx
 
 class ChangeID:
 
+    influxDB_host = "http://192.168.4.3:8086"
 
     def __init__(self, *args):
         self.ids = [1,1,1,1,1]
@@ -32,6 +33,7 @@ class ChangeID:
         data = request.json()
         self.ids = [int(i) for i in data['next_change_id'].split("-")]
 
+
     async def async_poe_ninja(self):
         """Pull current value from poe.ninja/stats
         """
@@ -42,6 +44,28 @@ class ChangeID:
         request.raise_for_status()
         data = request.json()
         self.ids = [int(i) for i in data['next_change_id'].split("-")]
+    
+
+    async def post_to_influx(self):
+        #TODO Hanlde dev/prod
+        data = ""
+        data += f"change_id,env=dev,index=0 value={self.ids[0]}\n"
+        data += f"change_id,env=dev,index=1 value={self.ids[1]}\n"
+        data += f"change_id,env=dev,index=2 value={self.ids[2]}\n"
+        data += f"change_id,env=dev,index=3 value={self.ids[3]}\n"
+        data += f"change_id,env=dev,index=4 value={self.ids[4]}\n"
+
+        host = self.influxDB_host + '/write'
+        params = {"db":"poe","precision":"s"}
+        try:
+            r = await httpx.post( host, params=params, data=data, timeout=1)
+            pass
+            # print(data)
+        except (KeyboardInterrupt, SystemExit, RuntimeError):
+            raise
+            return
+        except Exception as e:
+            self.log.exception("Posting to InfluxDB threw exception")
 
 
     def __str__(self):
