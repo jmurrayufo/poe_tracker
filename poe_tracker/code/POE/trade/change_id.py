@@ -2,9 +2,12 @@
 import requests
 import httpx
 
+from ...args import Args
+
 class ChangeID:
 
     influxDB_host = "http://192.168.4.3:8086"
+    args = Args()
 
     def __init__(self, *args):
         self.ids = [1,1,1,1,1]
@@ -49,11 +52,11 @@ class ChangeID:
     async def post_to_influx(self):
         #TODO Hanlde dev/prod
         data = ""
-        data += f"change_id,env=dev,index=0 value={self.ids[0]}\n"
-        data += f"change_id,env=dev,index=1 value={self.ids[1]}\n"
-        data += f"change_id,env=dev,index=2 value={self.ids[2]}\n"
-        data += f"change_id,env=dev,index=3 value={self.ids[3]}\n"
-        data += f"change_id,env=dev,index=4 value={self.ids[4]}\n"
+        data += f"change_id,env={self.args.env},index=0 value={self.ids[0]}\n"
+        data += f"change_id,env={self.args.env},index=1 value={self.ids[1]}\n"
+        data += f"change_id,env={self.args.env},index=2 value={self.ids[2]}\n"
+        data += f"change_id,env={self.args.env},index=3 value={self.ids[3]}\n"
+        data += f"change_id,env={self.args.env},index=4 value={self.ids[4]}\n"
 
         host = self.influxDB_host + '/write'
         params = {"db":"poe","precision":"s"}
