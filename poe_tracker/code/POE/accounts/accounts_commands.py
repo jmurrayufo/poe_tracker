@@ -18,7 +18,7 @@ class Accounts_Commands:
         self.args = Args()
         self.api = character_api.Character_Api()
 
-    async def _cmd_test(self, args):
+    async def test(self, args):
         self.log.info(f"Ran test with {args}")
         """
         Namespace(cmd=<bound method Accounts_Commands._cmd_test of <poe_tracker.code.POE.accounts.accounts_commands.Accounts_Commands object at 0x7fac95c89990>>, league=None, message=<Message id=662204499120881674 channel=<TextChannel id=606974927308062750 name='bot_spam' position=2 nsfw=False news=False category_id=None> type=<MessageType.default: 0> author=<Member id=185846097284038656 name='Soton' discriminator='2585' bot=False nick='John' guild=<Guild id=346094316428591104 name='IsBe' shard_id=None chunked=True member_count=61>>>)
@@ -29,7 +29,7 @@ class Accounts_Commands:
             await args.message.channel.send(str(results), delete_after=10.0)
         
 
-    async def _cmd_register(self, args):
+    async def register(self, args):
         """Attempt to register an account
         """
         self.log.info(f"Attempting to register an account")
@@ -71,7 +71,7 @@ class Accounts_Commands:
             return_document=ReturnDocument.AFTER,
         )
         for character in characters:
-            self.log.info(character)
+            self.log.debug(character)
             await self.db.characters.find_one_and_update(
                 {"name":character['name']},
                 {
@@ -105,5 +105,51 @@ class Accounts_Commands:
             )
 
 
+    async def plot(self, args):
+        """
+        Grab characters from the SQL db and give to the plotting class
+        Note: Some filtering happens in the Plotter (such as time filters!)
+        """
+        self.log.info("Check if character even exists")
+
+        characters = []
+        for char_name in args.names:
+            if not await self.poe_sql.has_character_by_name(char_name):
+                # await args.message.channel.send("Character not found.")
+                # return
+                continue
+
+            char_dict = await self.poe_sql.get_character_dict_by_name(char_name)
+            c = Character(char_dict, None)
+            characters.append(c)
+            self.log.info(f"Appended {c}")
 
 
+        # if args.all:
+        #     if not await self.poe_sql.has_character_by_name(char_name):
+        #         # await args.message.channel.send("Character not found.")
+        #         # return
+        #         continue
+
+        #     char_dict = await self.poe_sql.get_character_dict_by_name(char_name)
+        #     c = Character(char_dict, None)
+        #     characters.append(c)
+        #     self.log.info(f"Appended {c}")
+            
+
+
+        # If we didn't get any names, maybe we were just asked to filter a league?
+        if args.league is not None:
+            async for char in self.poe_sql.iter_characters():
+                if not re.search(args.league, char['league'], flags=re.IGNORECASE):
+                    continue
+                char_dict = await self.poe_sql.get_character_dict_by_name(char['name'])
+                c = Character(char_dict, None)
+                if c not in characters:
+                    characters.append(c)
+
+        if not len(characters):
+            await args.message.channel.send("I need chracters to plot!")
+            return
+
+        await Plotter(args).plot_character(characters, args.message.channel)

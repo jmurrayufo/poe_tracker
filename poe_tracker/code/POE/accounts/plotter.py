@@ -7,22 +7,23 @@ import matplotlib
 import numpy as np
 import time
 
-from ..Log import Log
-# from . import POE_SQL
+from ...Log import Log
+from ...args import Args
+from .. import mongo
 
 
 class Plotter:
     log = Log()
 
-    def __init__(self, args):
+    def __init__(self):
         # self.poe_sql = POE_SQL()
-        self.args = args
+        self.db = mongo.Mongo().db
+        self.args = Args()
 
 
     async def plot_character(self, characters, channel):
         # Not the best form, but matplotlib likes to fill our tests full of errors if we 
         # import this on module import...
-        
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
 
