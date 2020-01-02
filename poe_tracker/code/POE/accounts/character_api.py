@@ -63,7 +63,11 @@ class Character_Api(metaclass=Singleton):
 
 
     async def get_items(self, account, character):
-        pass
+        r = await self._get(self.get_items_url, params={"character":character, "accountName":account})
+        if r.status_code != 200:
+            self.log.error(f"Got response of {r.text}, done")
+            return None
+        return r.json()
 
 
     async def _get(self, url, params=None):
