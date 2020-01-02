@@ -37,16 +37,33 @@ class Accounts_Loop:
                 await asyncio.sleep(1)
 
             async for account in self.db.accounts.find():
-                self.log.info(f"Update {account['accountName']}")
+                self.log.debug(f"Update {account['accountName']}")
                 account_name, characters = await self.api.get_characters(account['accountName'])
                 if account_name is None:
                     continue
                 for character in characters:
                     await asyncio.sleep(0)
-                    self.log.info(f"Update {character}")
+                    self.log.debug(f"Update {character}")
+                    await self.update_character(account, character)
 
             self.next_update += self.config[self.args.env]['characters']['time_between_updates']
 
 
-            
+    async def update_character(self, account, character):
+        db_account = await self.db.accounts.find_one({"accountName":account})
+        db_character = await self.db.characters.find_one({"name":character['name']})
+        db_xp = await self.db.characters.xp.find_one({"name": character['name']},sort=[('date',-1)])
+
+        # Nothing to do if our local values still match
+        if db_character['experience'] == character['experience'] and db_xp is not None:
+            return
+
+        await self.db.characters.xp.insert_one(
+                {"name": character['name'],
+                 "experience": character['experience'],
+                 "level": character['level'],
+                 "date": datetime.datetime.now(),
+                 "league": character['league'],
+                }
+            )
 
