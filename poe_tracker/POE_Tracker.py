@@ -12,6 +12,7 @@ from .code.args import Args
 def main():
 
     args = Args()
+    args.parse()
 
     log = Log(args)
 
@@ -25,7 +26,7 @@ def main():
     #############################
 
     x.register(SQL("poe.db"))
-    x.register(POE(args))
+    x.register(POE())
     # x.register(Stats())
 
     #############################

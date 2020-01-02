@@ -16,8 +16,8 @@ class Mongo(metaclass=Singleton):
         client = motor.motor_asyncio.AsyncIOMotorClient('atlas.lan:27017', 
                                                         username='poe', 
                                                         password='poe', 
-                                                        authSource='path_of_exile')
-        self.db = client.path_of_exile
+                                                        authSource='admin')
+        self.db = client.path_of_exile_dev
         self.log.info("Mongo Connection init completed")
 
 
