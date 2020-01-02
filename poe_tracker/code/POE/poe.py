@@ -4,14 +4,15 @@ import discord
 import re
 import shlex
 
+from . import POE_Loop, Account, Character, mongo
+from ..args import Args
 from ..Client import Client
 from ..CommandProcessor import DiscordArgumentParser, ValidUserAction
 from ..CommandProcessor.exceptions import NoValidCommands, HelpNeeded
 from ..Log import Log
-from ..SQL import SQL
-from . import POE_SQL, POE_Loop, Account, Character, mongo
 from .plotter import Plotter
 from .trade import trade_loop
+from .accounts import accounts_loop, accounts_commands
 
 class POE:
 
@@ -19,10 +20,9 @@ class POE:
         self.client = Client()
         self.log = Log()
         self.ready = False
-        self.sql = SQL()
-        self.poe_sql = POE_SQL()
         self.mongo = mongo.Mongo()
-        self.args = args
+        self.args = Args()
+        self.accounts_commands = accounts_commands.Accounts_Commands()
 
 
     async def on_message(self, message):
@@ -42,11 +42,13 @@ class POE:
     async def on_ready(self):
         # Create the POE loop to handle background activities
 
-        await self.poe_sql.table_setup()
         await self.mongo.setup()
         
-        asyncio.create_task(POE_Loop(self.args).loop())
+        # asyncio.create_task(POE_Loop(self.args).loop())
         asyncio.create_task(trade_loop.Trade_Loop(self.args).loop())
+
+        self.accounts_loop = accounts_loop.Accounts_Loop()
+        asyncio.create_task(self.accounts_loop.loop())
 
         self.log.info("POE, ready to recieve commands!")
         self.ready = True
@@ -71,11 +73,10 @@ class POE:
         sub_parser = sp.add_parser('register',
             description='Register a user account for tracking')
         sub_parser.add_argument(
-            "accounts",
-            help="user account",
-            nargs='+',
+            "account",
+            help="user account/character name",
         )
-        sub_parser.set_defaults(cmd=self._cmd_register)
+        sub_parser.set_defaults(cmd=self.accounts_commands._cmd_register)
 
         # Display leaderboards for specific leagues
         sub_parser = sp.add_parser('leaderboard',
@@ -90,11 +91,11 @@ class POE:
         sub_parser = sp.add_parser('test',
             description='Debug command (please ignore)')
         sub_parser.add_argument(
-            "--league", "-l",
-            help="Filter to a league",
-            nargs=1,
+            "accounts",
+            help="user account(s) or character names",
+            nargs='+',
         )
-        sub_parser.set_defaults(cmd=self._cmd_test)
+        sub_parser.set_defaults(cmd=self.accounts_commands._cmd_test)
 
         # List off characters
         sub_parser = sp.add_parser('list',
@@ -209,25 +210,6 @@ class POE:
         message += "```"
 
         await args.message.channel.send(message)
-
-
-
-    async def _cmd_register(self, args):
-
-        for account in args.accounts:
-
-            a = Account(account)
-            if not a.check_good():
-                await args.message.channel.send(f"Account `{account}` doesn't seem ot be valid?")
-                continue
-
-            success = await self.poe_sql.register_account(account)
-            if success:
-                self.log.info(f"Registered {account}")
-                await args.message.channel.send(f"Registered {account}")
-            else:
-                self.log.warning(f"Cannot register {account}, account already exists.")
-                await args.message.channel.send(f"Cannot register {account}, account already exists.")
 
 
     async def _cmd_test(self, args):

@@ -78,7 +78,14 @@ class TradeAPI(metaclass=Singleton):
 
 
     async def iter_data(self):
+        t1 = time.time()
+        t2 = time.time()
         while 1:
+            while time.time() - t1 < 1:
+                await asyncio.sleep(0.1)
+            t1 = t2
+            t2 = time.time()
+
             if not await self.pull_data():
                 await asyncio.sleep(0)
                 continue

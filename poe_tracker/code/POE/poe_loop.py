@@ -120,7 +120,6 @@ class POE_Loop:
             # self.log.info(f"Saw state {state}")
             state_lists.append([int(i) for i in state.split(":")])
 
-
         for index in range(len(policy_lists)):
             # self.log.info(f"Parse {policy_lists[index]} against {state_lists[index]}")
             sleep_time = ((state_lists[index][0]/policy_lists[index][0])**10)*state_lists[index][1]
