@@ -46,6 +46,10 @@ class Accounts_Loop:
                     self.log.debug(f"Update {character}")
                     await self.update_character(account, character)
 
+                    #stuff = await self.api.get_items(account_name, character['name'])
+                    #print(stuff)
+                    #exit()
+
             self.next_update += self.config[self.args.env]['characters']['time_between_updates']
 
 
