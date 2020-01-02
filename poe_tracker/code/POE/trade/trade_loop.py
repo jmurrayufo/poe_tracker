@@ -72,39 +72,6 @@ class Trade_Loop:
                 cleaner_task = asyncio.create_task(self.cleaner())
 
 
-    async def sleep_for_state(self, policies, states):
-        """
-        Given a policy (eg: 60:60:60, 60 requests allowed in 60 seconds with a 60 second block if exceeded)
-        And a state (eg: 1:60:0, 1 request in the last 60 seconds with a 0 second timeout currently in effect)
-        Async sleep as needed to prevent throttling
-        'X-Rate-Limit-Ip': '60:60:60,200:120:900',
-        'X-Rate-Limit-Ip-State': '1:60:0,1:120:0',
-        We need to allow for complex policies if given them, such as this list seperated one!
-        """
-        sleep_needed = 0
-
-        policy_lists = []
-        for policy in policies.split(","):
-            # self.log.info(f"Saw policy {policy}")
-            policy_lists.append([int(i) for i in policy.split(":")])
-
-        state_lists = []
-        for state in states.split(","):
-            # self.log.info(f"Saw state {state}")
-            state_lists.append([int(i) for i in state.split(":")])
-
-
-        for index in range(len(policy_lists)):
-            # self.log.info(f"Parse {policy_lists[index]} against {state_lists[index]}")
-            sleep_time = ((state_lists[index][0]/policy_lists[index][0])**10)*state_lists[index][1]
-            sleep_needed = max(sleep_time, sleep_needed)
-            # self.log.info(f"Need {sleep_time}")
-
-        if sleep_needed > 1:
-            self.log.info(f"Sleeping for {sleep_needed:.1f} to avoid character limits ")
-        await asyncio.sleep(sleep_needed)
-
-
     async def ingest_to_db(self):
 
         stash_operations = []
