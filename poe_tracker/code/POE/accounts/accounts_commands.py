@@ -48,22 +48,19 @@ class Accounts_Commands:
         # Check to see if this account is on the mongo DB
         doc = await self.db.accounts.find_one_and_update(
             {"accountName":account_name},
-            {
-                "$set": 
-                {
+            {   
+                "$set": { 
                     "accountName":account_name,
                     "discordId":args.message.author.id,
-                    "lastActive":datetime.datetime.utcnow(),
+                    "lastActive":datetime.datetime.utcnow() 
                 },
-                "$setOnInsert": 
-                {
+                "$setOnInsert": { 
                     "registrationDate":datetime.datetime.utcnow(),
-                    "stats": 
-                    {
+                    "stats": { 
                         "total_experience": 0,
                         "lost_experience": 0,
                         "deaths": 0,
-                        "playtime": 0,
+                        "playtime": 0 
                     },
                 }
             },
@@ -75,17 +72,16 @@ class Accounts_Commands:
             await self.db.characters.find_one_and_update(
                 {"name":character['name']},
                 {
-                    "$set": 
-                    {
+                    "$set": {
                         "accountName":account_name,
                         "lastActive":datetime.datetime.utcnow(),
-                        'name': character['name'], 
-                        'league': character['league'], 
-                        'classId': character['classId'], 
-                        'ascendancyClass': character['ascendancyClass'], 
-                        'class': character['class'], 
-                        'level': character['level'], 
-                        'experience': character['experience']
+                        "name": character["name"], 
+                        "league": character["league"], 
+                        "classId": character["classId"], 
+                        "ascendancyClass": character["ascendancyClass"], 
+                        "class": character["class"], 
+                        "level": character["level"], 
+                        "experience": character["experience"]
                     },
                     "$setOnInsert": 
                     {
