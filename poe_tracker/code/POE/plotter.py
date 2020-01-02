@@ -8,16 +8,15 @@ import numpy as np
 import time
 
 from ..Log import Log
-from . import POE_SQL
+# from . import POE_SQL
 
 
 class Plotter:
     log = Log()
 
     def __init__(self, args):
-        self.poe_sql = POE_SQL()
+        # self.poe_sql = POE_SQL()
         self.args = args
-        pass
 
 
     async def plot_character(self, characters, channel):
