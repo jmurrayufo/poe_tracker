@@ -127,6 +127,9 @@ class Trade_Loop:
                 last_good_change_id = ChangeID(stashes['next_change_id'])
 
                 for stash in stashes['stashes']:
+                    # XXX Newly emptied stashes break here... Should we take the time to check them?
+                    if len(stash['items']) == 0:
+                        continue
                     # stash_sub_dict = copy.deepcopy(stash)
                     stash_sub_dict = {k:stash[k] for k in stash if k != 'items'}
                     stash_sub_dict['items'] = []
