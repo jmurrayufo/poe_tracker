@@ -40,7 +40,7 @@ class Character_Api(metaclass=Singleton):
         if r.status_code == 200:
             return account, r.json()
 
-        self.log.error(f"Got response of {r.text}, will try by name next")
+        self.log.info(f"Got response of {r.status_code}, will try by name next")
 
         # Maybe they gave us a character name?
         account = await self.get_account_by_character(account)
