@@ -5,6 +5,7 @@ from .. import mongo
 from . import character_api
 import datetime
 from pymongo import ReturnDocument
+import re
 
 
 
@@ -149,3 +150,59 @@ class Accounts_Commands:
             return
 
         await Plotter(args).plot_character(characters, args.message.channel)
+
+
+    async def leaderboard(self, args):
+        self.log.info("Print leaderboard")
+        """
+            "--league", "-l",
+            "--account", "-a",
+            "--recent", "-r",
+            "--top", "-t",
+        """
+        mongo_filter = {}
+        if args.league:
+            mongo_filter['league'] = re.compile(args.league)
+        if args.account:
+            mongo_filter['account'] = re.compile(args.account)
+        if args.recent:
+            mongo_filter['lastActive'] = {"$gt": datetime.datetime.utcnow() - datetime.timedelta(hours=args.recent)}
+
+        self.log.info(mongo_filter)
+        cursor = self.db.characters.find(mongo_filter,sort=[("experience",1)])
+        chars = await cursor.to_list(args.top)
+
+        message = "Top Characters:\n```\n"
+        rank = 1
+        for char in chars:
+            char_and_account = f"{char['name']} ({char['accountName']})"
+            message += f"{rank}) {char_and_account:>36} XP: {char['experience']:,} (Level:{char['level']}) \n"
+            rank += 1
+        message += "```"
+        await args.message.channel.send(message)
+
+
+    async def list(self, args):
+        """
+        "--league LEAGUE",
+        "--recent",
+        "--account ACCOUNT",
+        """
+        message = "```\n"
+        async for char in self.poe_sql.iter_characters():
+            # self.log.info(char)
+            # em.add_field(name=char['aname'], value=char['name'])
+            if args.league and args.league in char['league'].lower():
+                message += f"{char['name']:20} ({char['ac_name']})\n"
+            elif args.league is None:
+                message += f"{char['name']:20} ({char['ac_name']})\n"
+
+            if len(message) > 1900:
+                message += "```"
+                await args.message.author.send(message)
+                message = "```\n"
+
+
+        message += "```"
+        await args.message.author.send(message)
+        await args.message.channel.send("Lists are big, check your DMs.")

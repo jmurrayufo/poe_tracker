@@ -85,9 +85,25 @@ class POE:
             description='Print out leaderboard')
         sub_parser.add_argument(
             "--league", "-l",
-            help="Filter to a league",
+            help="Filter leagues (regex)",
         )
-        sub_parser.set_defaults(cmd=self._cmd_leaderboard)
+        sub_parser.add_argument(
+            "--account", "-a",
+            help="Filter accuont (regex)",
+        )
+        sub_parser.add_argument(
+            "--recent", "-r",
+            help="Filter by recent activity",
+            metavar='HOURS',
+            type=float,
+        )
+        sub_parser.add_argument(
+            "--top", "-t",
+            help="Filter to a league",
+            default=10,
+            type=int,
+        )
+        sub_parser.set_defaults(cmd=self.accounts_commands.leaderboard)
 
         # Test various things
         sub_parser = sp.add_parser('test',
@@ -116,7 +132,7 @@ class POE:
             nargs=1,
             help="Only give characters under the given account",
         )
-        sub_parser.set_defaults(cmd=self._cmd_list)
+        sub_parser.set_defaults(cmd=self.accounts_commands.list)
 
         # Plot Characters or Leagues
         sub_parser = sp.add_parser('plot',
@@ -180,38 +196,6 @@ class POE:
         return
 
 
-    async def _cmd_leaderboard(self, args):
-        self.log.info("Print leaders!")
-
-        top_per_account = {}
-        async for char in self.poe_sql.iter_characters():
-            # Filter if needed
-            if args.league is not None:
-                if not re.search(args.league, char['league'], flags=re.IGNORECASE):
-                    continue
-
-            char.update(await self.poe_sql.get_character_dict_by_name(char['name']))
-            xp = await self.poe_sql.get_character_last_xp(Character(char, None))
-            char.update(xp)
-
-            if char['ac_name'] not in top_per_account:
-                top_per_account[char['ac_name']] = char
-                continue
-
-            if top_per_account[char['ac_name']]['experience'] < char['experience']:
-                top_per_account[char['ac_name']] = char
-
-        message = "Top Characters:\n```\n"
-        rank = 1
-        for i in sorted(top_per_account, key=lambda x: top_per_account[x]['experience'], reverse=True):
-            self.log.info(top_per_account[i])
-            char = top_per_account[i]
-            char_and_account = f"{char['name']} ({char['ac_name']})"
-            message += f"{rank}) {char_and_account:>36} XP: {char['experience']:,} (Level:{char['level']}) \n"
-            rank += 1
-        message += "```"
-
-        await args.message.channel.send(message)
 
 
     async def _cmd_test(self, args):
@@ -219,27 +203,3 @@ class POE:
         await args.message.channel.send(args)
 
 
-    async def _cmd_list(self, args):
-        """
-        "--league LEAGUE",
-        "--recent",
-        "--account ACCOUNT",
-        """
-        message = "```\n"
-        async for char in self.poe_sql.iter_characters():
-            # self.log.info(char)
-            # em.add_field(name=char['aname'], value=char['name'])
-            if args.league and args.league in char['league'].lower():
-                message += f"{char['name']:20} ({char['ac_name']})\n"
-            elif args.league is None:
-                message += f"{char['name']:20} ({char['ac_name']})\n"
-
-            if len(message) > 1900:
-                message += "```"
-                await args.message.author.send(message)
-                message = "```\n"
-
-
-        message += "```"
-        await args.message.author.send(message)
-        await args.message.channel.send("Lists are big, check your DMs.")
