@@ -10,7 +10,7 @@ from ..Client import Client
 from ..CommandProcessor import DiscordArgumentParser, ValidUserAction
 from ..CommandProcessor.exceptions import NoValidCommands, HelpNeeded
 from ..Log import Log
-from .trade import trade_loop
+from .trade import trade_loop, post_process_loop
 from .accounts import accounts_loop, accounts_commands
 
 class POE:
@@ -42,12 +42,15 @@ class POE:
         # Create the POE loop to handle background activities
 
         await self.mongo.setup()
-        
-        # asyncio.create_task(POE_Loop(self.args).loop())
-        asyncio.create_task(trade_loop.Trade_Loop(self.args).loop())
 
         self.accounts_loop = accounts_loop.Accounts_Loop()
         asyncio.create_task(self.accounts_loop.loop())
+        
+        self.trade_loop = trade_loop.Trade_Loop(self.args)
+        asyncio.create_task(self.trade_loop.loop())
+
+        self.post_process_loop = post_process_loop.Post_Process_Loop()
+        asyncio.create_task(self.post_process_loop.loop())
 
         self.log.info("POE, ready to recieve commands!")
         self.ready = True
