@@ -60,7 +60,7 @@ class Accounts_Commands:
                         "total_experience": 0,
                         "lost_experience": 0,
                         "deaths": 0,
-                        "playtime": 0 
+                        "playtime": 0
                     },
                 }
             },
@@ -86,7 +86,6 @@ class Accounts_Commands:
                     "$setOnInsert": 
                     {
                          "creationDate":datetime.datetime.utcnow(),
-                         "lostExperience":0,
                          "stats": 
                          {
                              "total_experience": 0,
@@ -99,6 +98,7 @@ class Accounts_Commands:
                 upsert=True,
                 return_document=ReturnDocument.AFTER,
             )
+        await args.message.channel.send(f"I have registered `{account_name}` to <@{args.message.author.id}>")
 
 
     async def plot(self, args):

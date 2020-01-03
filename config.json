@@ -1,11 +1,12 @@
 {
     "dev": {
         "characters": {
-            "track": false,
+            "track": true,
             "time_between_updates": 60
         },
         "trade": {
-            "track": true
+            "ingest": true,
+            "post_process": true
         }
     },
     "prod": {
@@ -14,7 +15,8 @@
             "time_between_updates": 60
         },
         "trade": {
-            "track": true
+            "ingest": true,
+            "post_process": true
         }
     }
 }
