@@ -6,7 +6,11 @@
         },
         "trade": {
             "ingest": true,
-            "post_process": true
+            "post_process": false
+        },
+        "discord": {
+            "death_announces": 606974927308062750,
+            "ding_announces": 606974927308062750
         }
     },
     "prod": {
@@ -17,6 +21,10 @@
         "trade": {
             "ingest": true,
             "post_process": true
+        },
+        "discord": {
+            "death_announces": 657076474939047956,
+            "ding_announces": 657076474939047956
         }
     }
 }

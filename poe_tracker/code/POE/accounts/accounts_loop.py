@@ -4,12 +4,15 @@ import requests
 import httpx
 import time
 import datetime
+import discord
 
-from ...Config import Config
-from ...Log import Log
+from . import character_api, character_embeds, xp_math
 from .. import mongo
 from ...args import Args
-from . import character_api
+from ...Config import Config
+from ...Log import Log
+from ...Client import Client
+from pymongo import ReturnDocument
 
 class Accounts_Loop:
 
@@ -21,6 +24,7 @@ class Accounts_Loop:
         self.db = mongo.Mongo().db
         self.next_update = time.time()
         self.api = character_api.Character_Api()
+        self.client = Client()
 
     async def loop(self):
         """
@@ -56,6 +60,38 @@ class Accounts_Loop:
     async def update_character(self, account_name, character):
         db_account = await self.db.accounts.find_one({"accountName":account_name})
         db_character = await self.db.characters.find_one({"name":character['name']})
+        
+        if db_character is None:
+            db_character = await self.db.characters.find_one_and_update(
+                {"name":character['name']},
+                {
+                    "$set": {
+                        "accountName":account_name,
+                        "lastActive":datetime.datetime.utcnow(),
+                        "name": character["name"], 
+                        "league": character["league"], 
+                        "classId": character["classId"], 
+                        "ascendancyClass": character["ascendancyClass"], 
+                        "class": character["class"], 
+                        "level": character["level"], 
+                        "experience": character["experience"]
+                    },
+                    "$setOnInsert": 
+                    {
+                         "creationDate":datetime.datetime.utcnow(),
+                         "stats": 
+                         {
+                             "total_experience": 0,
+                             "lost_experience": 0,
+                             "deaths": 0,
+                             "playtime": 0,
+                         },
+                    }
+                },
+                upsert=True,
+                return_document=ReturnDocument.AFTER,
+            )
+
         db_xp = await self.db.characters.xp.find_one({"name": character['name']},sort=[('date',-1)])
 
         # Nothing to do if our local values still match
@@ -73,7 +109,20 @@ class Accounts_Loop:
                 }
             )
 
-        deaths = 1 if db_character['experience'] > character['experience'] else 0
+        deaths = 0
+        if db_character['experience'] > character['experience']:
+            old_percent = xp_math.XPMath().level_percent(db_character['experience'])
+            new_percent = xp_math.XPMath().level_percent(character['experience'])
+            deaths = old_percent - new_percent
+            # 10% of xp is lost after the kitava fight. We kinda assume that 
+            # anyone over level 60 is past that fight. 
+            if character['level'] > 60:
+                deaths /= 0.1
+            else:
+                deaths /= 0.05
+            self.log.info(f"Calculate a death at {deaths}")
+            deaths = max(int(round(deaths)),1)
+
         lost_xp = max(0, db_character['experience'] - character['experience'])
         gained_xp = max(0, character['experience'] - db_character['experience'])
         if datetime.datetime.utcnow() - db_character['lastActive'] < datetime.timedelta(minutes=15):
@@ -82,8 +131,8 @@ class Accounts_Loop:
         else:
             playtime = 0
 
-
-        await self.db.characters.find_one_and_update(
+        # Pull the actual character JSON for use with deaths/dings
+        updated_character = await self.db.characters.find_one_and_update(
             {"name":character['name']},
             {
                 "$set": 
@@ -99,9 +148,9 @@ class Accounts_Loop:
                     "stats.deaths": deaths,
                     "stats.playtime": playtime,
                 }
-            }
+            },
+            return_document=ReturnDocument.AFTER,
         )
-
 
         await self.db.accounts.find_one_and_update(
             {"accountName":account_name},
@@ -116,3 +165,16 @@ class Accounts_Loop:
             }
         )
 
+        # Handle any messages to discord
+        if character['level'] != db_character['level']:
+            # We had a ding!
+            channel_id = self.config[self.args.env]['discord']['death_announces']
+            if channel_id:
+                channel = self.client.get_channel(channel_id)
+                await channel.send(embed=character_embeds.ding_embed(updated_character))
+
+        if deaths:
+            channel_id = self.config[self.args.env]['discord']['death_announces']
+            if channel_id:
+                channel = self.client.get_channel(channel_id)
+                await channel.send(embed=character_embeds.death_embed(updated_character))
