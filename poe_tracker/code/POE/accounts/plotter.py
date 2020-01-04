@@ -1,5 +1,5 @@
 import asyncio
-import datetime as dt
+import datetime
 import discord
 import humanize
 import io
@@ -16,12 +16,11 @@ class Plotter:
     log = Log()
 
     def __init__(self):
-        # self.poe_sql = POE_SQL()
         self.db = mongo.Mongo().db
         self.args = Args()
 
 
-    async def plot_character(self, characters, channel):
+    async def plot_character(self, args, characters):
         # Not the best form, but matplotlib likes to fill our tests full of errors if we 
         # import this on module import...
         matplotlib.use("Agg")
@@ -34,48 +33,49 @@ class Plotter:
             def format_data(self, value):
                 return humanize.intword(value, "%.3f")
 
+        self.log.info("Begin to handle plotting")
         self.log.info(characters)
-        self.log.info(self.args)
+        self.log.info(args)
         plot_sets = []
         characters_plotted = []
         for character in characters:
             x = []
             y = []
-            async for xp in self.poe_sql.iter_character_xp(character):
-
+            async for xp_dict in self.db.characters.xp.find({"name":character}):
                 # Filter out items if we only want recent data
-                if self.args.recent:
-                    if (time.time() - xp['timestamp'])/60/60 > int(self.args.recent):
+                if args.recent:
+                    if (datetime.datetime.utcnow() - xp_dict['date']).total_seconds()/60/60 > args.recent:
                         continue
 
-                x.append(xp['timestamp'])
-                y.append(xp['experience'])
+                x.append(xp_dict['date'])
+                y.append(xp_dict['experience'])
 
-
-            if self.args.differential:
+            if args.differential:
                 # Step through each point in y, and caluclate it's difference
                 # Note that we drop a point along the way!
                 y = np.asarray(y)
+                x = [i.timestamp() for i in x]
                 # x = np.asarray(x)
                 y = list(60*60*np.diff(y)/np.diff(np.asarray(x)))
                 # We need to trim off the first element of x to makeup for the lost data in the differential
                 x = x[1:]
-
-            x = [dt.datetime.fromtimestamp(ts) for ts in x]
+                x = [datetime.datetime.utcfromtimestamp(i) for i in x]
 
             if len(x):
-                plot_sets.append((x,y,character.name))
-                characters_plotted.append(character.name)
+                plot_sets.append((x,y,character))
+                characters_plotted.append(character)
             else:
                 self.log.warning(f"Fully filtered out {character.name}")
 
         if len(plot_sets) == 0:
             return
 
+        self.log.info("Init plots")
         plt.figure(figsize=(9,6))
         for plot_set in plot_sets:
             plt.plot(plot_set[0], plot_set[1], label=plot_set[2])
 
+        self.log.info("Config plots")
         ax = plt.gca()
 
         plt.legend()
@@ -92,14 +92,17 @@ class Plotter:
         plt.grid()
 
         # Save figure to ram for printing to discord
+        self.log.info("Write plots to buffer")
         buf = io.BytesIO()
         plt.savefig(buf, format='png', bbox_inches='tight',dpi=100)
         buf.seek(0)
         f = discord.File(buf, filename="chart.png")
 
         # Send message to discord
+        self.log.info("Send to discord")
         message = f"Plotting for characters: {', '.join(characters_plotted)}"
-        await channel.send(message, file=f)
+        await args.message.channel.send(message, file=f)
+        self.log.info("Plot completed")
 
 
 

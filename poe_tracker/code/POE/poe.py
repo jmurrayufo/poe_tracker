@@ -108,11 +108,6 @@ class POE:
         # Test various things
         sub_parser = sp.add_parser('test',
             description='Debug command (please ignore)')
-        sub_parser.add_argument(
-            "accounts",
-            help="user account(s) or character names",
-            nargs='+',
-        )
         sub_parser.set_defaults(cmd=self.accounts_commands.test)
 
         # List off characters

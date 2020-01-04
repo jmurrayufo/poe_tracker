@@ -129,7 +129,7 @@ class XPMath:
 
 
     def level_percent(self, xp):
-        """Given a set amount of xp, show % of level acomplished
+        """Given a set amount of xp, return % of level acomplished
         """
         current_level = self.level(xp)
         if current_level == 100:
