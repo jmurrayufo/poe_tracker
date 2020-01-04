@@ -19,7 +19,7 @@ chmod 644 /etc/systemd/system/poe-tracker.service
 
 echo "About to run: systemctl daemon-reload"
 read
-systemctl reload-daemon
+systemctl daemon-reload
 
 echo "About to run: systemctl start poe-tracker"
 read
