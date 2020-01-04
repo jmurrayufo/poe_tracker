@@ -7,6 +7,7 @@ verify_ssl = true
 nose = "*"
 nose-timer = "*"
 coverage = "*"
+pymongo = "*"
 
 [packages]
 discord = "*"
@@ -15,6 +16,9 @@ requests = "*"
 numpy = "*"
 matplotlib = "*"
 humanize = "*"
+httpx = "*"
+motor = "*"
+sdnotify = "*"
 
 [requires]
 python_version = "3.7"
