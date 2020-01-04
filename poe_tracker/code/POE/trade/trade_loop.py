@@ -91,8 +91,9 @@ class Trade_Loop:
                     stash_sub_dict['items'] = []
 
                     for item in stash['items']:
-                        if 'note' not in item:
-                            continue
+                        # TODO: Maybe make this a config option?
+                        # if 'note' not in item:
+                        #     continue
                         item['stash_id'] = stash['id']
                         item.pop("descrText", None)
                         item.pop("flavourText", None)
