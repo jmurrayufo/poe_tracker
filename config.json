@@ -6,7 +6,7 @@
         },
         "trade": {
             "ingest": true,
-            "post_process": false
+            "post_process": true
         },
         "discord": {
             "death_announces": 606974927308062750,

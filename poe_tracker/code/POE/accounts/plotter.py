@@ -11,7 +11,6 @@ from ...Log import Log
 from ...args import Args
 from .. import mongo
 
-
 class Plotter:
     log = Log()
 

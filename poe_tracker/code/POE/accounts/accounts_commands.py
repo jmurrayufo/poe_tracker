@@ -170,7 +170,7 @@ class Accounts_Commands:
             mongo_filter['lastActive'] = {"$gt": datetime.datetime.utcnow() - datetime.timedelta(hours=args.recent)}
 
         self.log.info(mongo_filter)
-        cursor = self.db.characters.find(mongo_filter,sort=[("experience",1)])
+        cursor = self.db.characters.find(mongo_filter,sort=[("experience",-1)])
         chars = await cursor.to_list(args.top)
 
         message = "Top Characters:\n```\n"

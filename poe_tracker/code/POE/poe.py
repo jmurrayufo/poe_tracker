@@ -151,7 +151,7 @@ class POE:
             "--recent", "-r",
             help="Restrict to recent N hours",
             nargs="?",
-            type=int,
+            type=float,
             metavar="N",
             const=24,
         )
