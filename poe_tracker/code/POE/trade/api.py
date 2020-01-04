@@ -54,8 +54,16 @@ class TradeAPI(metaclass=Singleton):
             return False
         # self.log.info(self.gen_change_id())
         # print(r.headers)
-        self.log.debug(r.headers['X-Rate-Limit-Ip'])
-        self.log.debug(r.headers['X-Rate-Limit-Ip-State'])
+        try:
+            self.log.debug(r.headers['X-Rate-Limit-Ip'])
+            self.log.debug(r.headers['X-Rate-Limit-Ip-State'])
+        except KeyError:
+            self.log.exception("Didn't find a key?!")
+            self.log.info(r)
+            self.log.info(r.status_code)
+            self.log.info(r.text)
+            self.log.info(r.json())
+            return False
         try:
             if r.headers['X-Rate-Limit-Ip-State'][0] not in ['1','2']:
                 self.log.warning("Overran timeout")
