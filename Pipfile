@@ -18,6 +18,7 @@ matplotlib = "*"
 humanize = "*"
 httpx = "*"
 motor = "*"
+sdnotify = "*"
 
 [requires]
 python_version = "3.7"

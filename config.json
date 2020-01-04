@@ -19,8 +19,8 @@
             "time_between_updates": 60
         },
         "trade": {
-            "ingest": true,
-            "post_process": true
+            "ingest": false,
+            "post_process": false
         },
         "discord": {
             "death_announces": 657076474939047956,
