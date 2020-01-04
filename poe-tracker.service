@@ -1,0 +1,23 @@
+  
+[Unit]
+Description=Path of Exile Discord Bot
+After=multi-user.target
+
+[Service]
+# Note that we use Type=notify here since test.py will send "READY=1"
+# when it's finished starting up. Could be 'Type=simple' if we didn't.
+Type=notify
+
+ExecStart=./run_bot_prod.sh
+WorkingDirectory=/home/discord/Git/poe_tracker
+
+User=discord
+Group=discord
+
+RestartSec=30
+WatchdogSec=60
+
+Environment=PYTHONUNBUFFERED=true
+
+[Install]
+WantedBy=multi-user.target
