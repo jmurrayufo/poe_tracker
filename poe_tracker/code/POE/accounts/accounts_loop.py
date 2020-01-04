@@ -107,7 +107,7 @@ class Accounts_Loop:
                  "date": datetime.datetime.now(),
                  "league": character['league'],
                 }
-            )
+        )
 
         deaths = 0
         if db_character['experience'] > character['experience']:
@@ -133,36 +133,36 @@ class Accounts_Loop:
 
         # Pull the actual character JSON for use with deaths/dings
         updated_character = await self.db.characters.find_one_and_update(
-            {"name":character['name']},
-            {
-                "$set": 
+                {"name":character['name']},
                 {
-                    "experience": character['experience'],
-                    "level": character['level'],
-                    "lastActive": datetime.datetime.utcnow(),
+                    "$set": 
+                    {
+                        "experience": character['experience'],
+                        "level": character['level'],
+                        "lastActive": datetime.datetime.utcnow(),
+                    },
+                    "$inc":
+                    {
+                        "stats.total_experince": gained_xp,
+                        "stats.lost_expereince": lost_xp,
+                        "stats.deaths": deaths,
+                        "stats.playtime": playtime,
+                    }
                 },
-                "$inc":
-                {
-                    "stats.total_experince": gained_xp,
-                    "stats.lost_expereince": lost_xp,
-                    "stats.deaths": deaths,
-                    "stats.playtime": playtime,
-                }
-            },
-            return_document=ReturnDocument.AFTER,
+                return_document=ReturnDocument.AFTER,
         )
 
         await self.db.accounts.find_one_and_update(
-            {"accountName":account_name},
-            {
-                "$inc":
+                {"accountName":account_name},
                 {
-                    "stats.total_experince": gained_xp,
-                    "stats.lost_expereince": lost_xp,
-                    "stats.deaths": deaths,
-                    "stats.playtime": playtime,
+                    "$inc":
+                    {
+                        "stats.total_experince": gained_xp,
+                        "stats.lost_expereince": lost_xp,
+                        "stats.deaths": deaths,
+                        "stats.playtime": playtime,
+                    }
                 }
-            }
         )
 
         # Handle any messages to discord
@@ -175,6 +175,23 @@ class Accounts_Loop:
 
         if deaths:
             channel_id = self.config[self.args.env]['discord']['death_announces']
+
+            death_dict = await self.db.characters.xp.find_one(
+                    {
+                        "name": character['name'],
+                        "experience":{"$lte":character['experience']}, 
+                        "date": {"$lt":dateime.datetime.utcnow() - datetime.timedelta(minutes=1)},
+                    }
+            )
+
             if channel_id:
                 channel = self.client.get_channel(channel_id)
-                await channel.send(embed=character_embeds.death_embed(updated_character))
+                await channel.send(embed=character_embeds.death_embed(updated_character, death_dict=death_dict))
+
+
+# .find(
+# {
+#     "name":"SotonBuffUm", 
+#     "experience":{"$lte":1706027422}, 
+#     "date": {"$lt":ISODate("2020-01-04T07:14:03.981-07:00") }
+# })

@@ -202,6 +202,11 @@ class Mongo(metaclass=Singleton):
             name="id",
             unique=True,
             )
+        self.log.info("Create 'accountName' index")
+        await self.db.stashes.create_index(
+            [('accountName', 1)],
+            name="accountName",
+            )
 
 
         self.log.info("Finish mongo setup")
