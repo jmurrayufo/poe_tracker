@@ -8,7 +8,7 @@ After=multi-user.target
 # when it's finished starting up. Could be 'Type=simple' if we didn't.
 Type=notify
 
-ExecStart=./run_bot_prod.sh
+ExecStart=/bin/bash ./run_bot_prod.sh
 WorkingDirectory=/home/discord/Git/poe_tracker
 
 User=discord
