@@ -73,7 +73,8 @@ class POE:
 
         # Register new users
         sub_parser = sp.add_parser('register',
-            description='Register a user account for tracking')
+            description='Register a user account for tracking',
+            help='Register your account for tracking')
         sub_parser.add_argument(
             "account",
             help="user account/character name",
@@ -82,7 +83,8 @@ class POE:
 
         # Display leaderboards for specific leagues
         sub_parser = sp.add_parser('leaderboard',
-            description='Print out leaderboard')
+            description='Print out leaderboard',
+            help='Show leaders of accounts I track')
         sub_parser.add_argument(
             "--league", "-l",
             help="Filter leagues (regex)",
@@ -107,7 +109,8 @@ class POE:
 
         # Test various things
         sub_parser = sp.add_parser('test',
-            description='Debug command (please ignore)')
+            description='Debug command (please ignore)',
+            test='Break shit')
         sub_parser.set_defaults(cmd=self.accounts_commands.test)
 
         # List off characters
@@ -132,7 +135,7 @@ class POE:
         # Plot Characters or Leagues
         sub_parser = sp.add_parser('plot',
             description="Plot various player xp gains",
-            help="")
+            help="Plot character xp")
         sub_parser.add_argument(
             "names",
             help="Character name",
