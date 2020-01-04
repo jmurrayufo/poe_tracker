@@ -156,4 +156,3 @@ class XPMath:
         ret_val += " " * (bubbles - int(fill_bubbles))
         ret_val += end
         return ret_val
-

@@ -25,9 +25,7 @@ def main():
     # Register all modules here #
     #############################
 
-    x.register(SQL("poe.db"))
     x.register(POE())
-    # x.register(Stats())
 
     #############################
     # Register all modules here #
