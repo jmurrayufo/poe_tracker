@@ -3,31 +3,34 @@ from pprint import pprint
 import math
 import re
 import requests
+import httpx
 import sys
 import time
 import time
+import asyncio
 
-from ..Singleton import Singleton
-from ..Log import Log
+from ...Singleton import Singleton
+from ...Log import Log
+
+from .change_id import ChangeID
 
 class TradeAPI(metaclass=Singleton):
 
     poe_trade_url = "http://www.pathofexile.com/api/public-stash-tabs"
 
-    def __init__(self):
+    def __init__(self, poesessid=None):
 
         self.log = Log()
+        self.poesessid = poesessid
 
-        # Set to True when we sync with the current change_ids on the server
-        self.synced = False
         # This is a 5 element list of the current change IDs
-        self.change_ids = [1,1,1,1,1]
+        self.next_change_id = ChangeID()
         self.data = {}
         self.data_size = 0
         self.last_data_pull = time.time()
 
 
-    def pull_data(self):
+    async def pull_data(self):
         """
         Update data from the API.
         """
@@ -36,45 +39,77 @@ class TradeAPI(metaclass=Singleton):
         # TODO: Consider checking this header and delaying after call?
         # if r.headers['X-Rate-Limit-Ip-State'][0] == '2':
         # time.sleep(max(0, 0.5 - (time.time() - self.last_data_pull )))
-        r = requests.get(
-            self.poe_trade_url,
-            params={"id":self.gen_change_id()},
-            )
+        # self.log.info("Pulling data...")
 
-        # print(r.headers['X-Rate-Limit-Ip'])
-        # print(r.headers['X-Rate-Limit-Ip-State'])
         try:
-            if r.headers['X-Rate-Limit-Ip-State'][0] != '1':
-                # print(r.json())
-                # print(r.text)
-                # print(r.headers)
-                # exit()
-                time.sleep(0.5)
+            r = await httpx.get(
+                self.poe_trade_url,
+                params={"id":self.gen_change_id()},
+                headers={"Cookie": f"POESESSID={self.poesessid}"},
+                timeout=10
+                )
+        except httpx.exceptions.ReadTimeout:
+            return False
+        except httpx.exceptions.ConnectTimeout:
+            return False
+        # self.log.info(self.gen_change_id())
+        # print(r.headers)
+        try:
+            self.log.debug(r.headers['X-Rate-Limit-Ip'])
+            self.log.debug(r.headers['X-Rate-Limit-Ip-State'])
+        except KeyError:
+            self.log.exception("Didn't find a key?!")
+            self.log.info(r)
+            self.log.info(r.status_code)
+            self.log.info(r.text)
+            self.log.info(r.json())
+            return False
+        try:
+            if r.headers['X-Rate-Limit-Ip-State'][0] not in ['1','2']:
+                self.log.warning("Overran timeout")
+                await asyncio.sleep(0.5)
+                return False
+            r.raise_for_status()
         except Exception as e:
             print(r)
             print(r.status_code)
             print(e)
-            return
+            return False
         self.last_data_pull = time.time()
         self.data = r.json()
         self.data_size = sys.getsizeof(r.text)
+        return True
 
 
     def gen_change_id(self):
-        return f"{'-'.join(str(x) for x in self.change_ids)}"
+        return str(self.next_change_id)
 
 
-    def iter_data(self):
+    async def iter_data(self):
+        t1 = time.time()
+        t2 = time.time()
         while 1:
-            self.pull_data()
-            yield self.data
+            while time.time() - t1 < 1:
+                await asyncio.sleep(0.1)
+            t1 = t2
+            t2 = time.time()
+
+            if not await self.pull_data():
+                await asyncio.sleep(0)
+                continue
             self.set_next_change_id()
+            yield self.data
+
+    def set_next_change_id(self, new_change_id=None):
+        if new_change_id:
+            server_next_change_id = new_change_id
+        else:
+            server_next_change_id = self.data['next_change_id']
+        self.next_change_id = ChangeID(server_next_change_id)
 
 
-    def set_next_change_id(self):
-        server_next_change_id = self.data['next_change_id']
-        server_change_ids = re.match(r"(\d+)-(\d+)-(\d+)-(\d+)-(\d+)", server_next_change_id).groups()
-        self.change_ids = [int(x) for x in server_change_ids] 
+    async def sync_poe_ninja(self):
+        await self.next_change_id.async_poe_ninja()
 
 
     def sync_change_ids(self):
@@ -85,7 +120,11 @@ class TradeAPI(metaclass=Singleton):
         #   0: find upper bound, double max each bad guess.
         #   1: Binary isolation
         #   2: Target locked
-        print("Lets guess")
+        # print("Lets guess")
+
+        # This need to be converted over to async
+        return NotImplemented
+
         guesses = {}
         # Initial guesses are setup to be the current change IDs. This will allow rapid catchup!
         guesses[0] = [self.change_ids[0],self.change_ids[0],0,True]
@@ -95,15 +134,15 @@ class TradeAPI(metaclass=Singleton):
         guesses[4] = [self.change_ids[4],self.change_ids[4],0,True]
 
         while 1:
-            print()
+            # print()
             for key in guesses:
                 if guesses[key][3]:
                     break
             else:
-                print("All keys locked, break")
+                # print("All keys locked, break")
                 break
 
-            print("Still keys to find!")
+            # print("Still keys to find!")
 
             # Set current self.change_ids based on direction of guesses
             # Hit poe_trade_url
@@ -124,7 +163,8 @@ class TradeAPI(metaclass=Singleton):
             # pprint(guesses)
             for key in guesses:
                 # print(f"[{key}] {math.log(guesses[key][1]-guesses[key][0],2):.3f} {guesses[key][2]} {guesses[key][3]}")
-                print(f"[{key}] {guesses[key][1]-guesses[key][0]:,d} {guesses[key][2]} {guesses[key][3]}")
+                # print(f"[{key}] {guesses[key][1]-guesses[key][0]:,d} {guesses[key][2]} {guesses[key][3]}")
+                pass
 
             self.pull_data()
             server_next_change_id = self.data['next_change_id']

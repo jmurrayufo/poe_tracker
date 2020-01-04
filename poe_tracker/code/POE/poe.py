@@ -4,12 +4,15 @@ import discord
 import re
 import shlex
 
+from . import mongo
+from ..args import Args
 from ..Client import Client
 from ..CommandProcessor import DiscordArgumentParser, ValidUserAction
 from ..CommandProcessor.exceptions import NoValidCommands, HelpNeeded
 from ..Log import Log
-from ..SQL import SQL
-from . import POE_SQL, POE_Loop, Account, Character, Plotter
+from .trade import trade_loop, post_process_loop
+from .accounts import accounts_loop, accounts_commands
+from ..watchdog import watchdog
 
 class POE:
 
@@ -17,9 +20,9 @@ class POE:
         self.client = Client()
         self.log = Log()
         self.ready = False
-        self.sql = SQL()
-        self.poe_sql = POE_SQL()
-        self.args = args
+        self.mongo = mongo.Mongo()
+        self.args = Args()
+        self.accounts_commands = accounts_commands.Accounts_Commands()
 
 
     async def on_message(self, message):
@@ -37,9 +40,21 @@ class POE:
 
 
     async def on_ready(self):
-        asyncio.create_task(POE_Loop(60, self.args).loop())
+        # Create the POE loop to handle background activities
 
-        await self.poe_sql.table_setup()
+        await self.mongo.setup()
+
+        self.watchdog_loop = watchdog.Watchdog()
+        asyncio.create_task(self.watchdog_loop.loop())
+
+        self.accounts_loop = accounts_loop.Accounts_Loop()
+        asyncio.create_task(self.accounts_loop.loop())
+        
+        self.trade_loop = trade_loop.Trade_Loop(self.args)
+        asyncio.create_task(self.trade_loop.loop())
+
+        self.post_process_loop = post_process_loop.Post_Process_Loop()
+        asyncio.create_task(self.post_process_loop.loop())
 
         self.log.info("POE, ready to recieve commands!")
         self.ready = True
@@ -62,32 +77,45 @@ class POE:
 
         # Register new users
         sub_parser = sp.add_parser('register',
-            description='Register a user account for tracking')
+            description='Register a user account for tracking',
+            help='Register your account for tracking')
         sub_parser.add_argument(
-            "accounts",
-            help="user account",
-            nargs='+',
+            "account",
+            help="user account/character name",
         )
-        sub_parser.set_defaults(cmd=self._cmd_register)
+        sub_parser.set_defaults(cmd=self.accounts_commands.register)
 
         # Display leaderboards for specific leagues
         sub_parser = sp.add_parser('leaderboard',
-            description='Print out leaderboard')
+            description='Print out leaderboard',
+            help='Show leaders of accounts I track')
         sub_parser.add_argument(
             "--league", "-l",
-            help="Filter to a league",
+            help="Filter leagues (regex)",
         )
-        sub_parser.set_defaults(cmd=self._cmd_leaderboard)
+        sub_parser.add_argument(
+            "--account", "-a",
+            help="Filter accuont (regex)",
+        )
+        sub_parser.add_argument(
+            "--recent", "-r",
+            help="Filter by recent activity",
+            metavar='HOURS',
+            type=float,
+        )
+        sub_parser.add_argument(
+            "--top", "-t",
+            help="Filter to a league",
+            default=10,
+            type=int,
+        )
+        sub_parser.set_defaults(cmd=self.accounts_commands.leaderboard)
 
         # Test various things
         sub_parser = sp.add_parser('test',
-            description='Debug command (please ignore)')
-        sub_parser.add_argument(
-            "--league", "-l",
-            help="Filter to a league",
-            nargs=1,
-        )
-        sub_parser.set_defaults(cmd=self._cmd_test)
+            description='Debug command (please ignore)',
+            test='Break shit')
+        sub_parser.set_defaults(cmd=self.accounts_commands.test)
 
         # List off characters
         sub_parser = sp.add_parser('list',
@@ -106,12 +134,12 @@ class POE:
             nargs=1,
             help="Only give characters under the given account",
         )
-        sub_parser.set_defaults(cmd=self._cmd_list)
+        sub_parser.set_defaults(cmd=self.accounts_commands.list)
 
         # Plot Characters or Leagues
         sub_parser = sp.add_parser('plot',
             description="Plot various player xp gains",
-            help="")
+            help="Plot character xp")
         sub_parser.add_argument(
             "names",
             help="Character name",
@@ -130,11 +158,11 @@ class POE:
             "--recent", "-r",
             help="Restrict to recent N hours",
             nargs="?",
-            type=int,
+            type=float,
             metavar="N",
             const=24,
         )
-        sub_parser.set_defaults(cmd=self._cmd_plot)
+        sub_parser.set_defaults(cmd=self.accounts_commands.plot)
 
         try:
             self.log.info("Parse Arguments")
@@ -170,57 +198,6 @@ class POE:
         return
 
 
-    async def _cmd_leaderboard(self, args):
-        self.log.info("Print leaders!")
-
-        top_per_account = {}
-        async for char in self.poe_sql.iter_characters():
-            # Filter if needed
-            if args.league is not None:
-                if not re.search(args.league, char['league'], flags=re.IGNORECASE):
-                    continue
-
-            char.update(await self.poe_sql.get_character_dict_by_name(char['name']))
-            xp = await self.poe_sql.get_character_last_xp(Character(char, None))
-            char.update(xp)
-
-            if char['ac_name'] not in top_per_account:
-                top_per_account[char['ac_name']] = char
-                continue
-
-            if top_per_account[char['ac_name']]['experience'] < char['experience']:
-                top_per_account[char['ac_name']] = char
-
-        message = "Top Characters:\n```\n"
-        rank = 1
-        for i in sorted(top_per_account, key=lambda x: top_per_account[x]['experience'], reverse=True):
-            self.log.info(top_per_account[i])
-            char = top_per_account[i]
-            char_and_account = f"{char['name']} ({char['ac_name']})"
-            message += f"{rank}) {char_and_account:>36} XP: {char['experience']:,} (Level:{char['level']}) \n"
-            rank += 1
-        message += "```"
-
-        await args.message.channel.send(message)
-
-
-
-    async def _cmd_register(self, args):
-
-        for account in args.accounts:
-
-            a = Account(account)
-            if not a.check_good():
-                await args.message.channel.send(f"Account `{account}` doesn't seem ot be valid?")
-                continue
-
-            success = await self.poe_sql.register_account(account)
-            if success:
-                self.log.info(f"Registered {account}")
-                await args.message.channel.send(f"Registered {account}")
-            else:
-                self.log.warning(f"Cannot register {account}, account already exists.")
-                await args.message.channel.send(f"Cannot register {account}, account already exists.")
 
 
     async def _cmd_test(self, args):
@@ -228,77 +205,3 @@ class POE:
         await args.message.channel.send(args)
 
 
-    async def _cmd_plot(self, args):
-        """
-        Grab characters from the SQL db and give to the plotting class
-        Note: Some filtering happens in the Plotter (such as time filters!)
-        """
-        self.log.info("Check if character even exists")
-
-        characters = []
-        for char_name in args.names:
-            if not await self.poe_sql.has_character_by_name(char_name):
-                # await args.message.channel.send("Character not found.")
-                # return
-                continue
-
-            char_dict = await self.poe_sql.get_character_dict_by_name(char_name)
-            c = Character(char_dict, None)
-            characters.append(c)
-            self.log.info(f"Appended {c}")
-
-
-        # if args.all:
-        #     if not await self.poe_sql.has_character_by_name(char_name):
-        #         # await args.message.channel.send("Character not found.")
-        #         # return
-        #         continue
-
-        #     char_dict = await self.poe_sql.get_character_dict_by_name(char_name)
-        #     c = Character(char_dict, None)
-        #     characters.append(c)
-        #     self.log.info(f"Appended {c}")
-            
-
-
-        # If we didn't get any names, maybe we were just asked to filter a league?
-        if args.league is not None:
-            async for char in self.poe_sql.iter_characters():
-                if not re.search(args.league, char['league'], flags=re.IGNORECASE):
-                    continue
-                char_dict = await self.poe_sql.get_character_dict_by_name(char['name'])
-                c = Character(char_dict, None)
-                if c not in characters:
-                    characters.append(c)
-
-        if not len(characters):
-            await args.message.channel.send("I need chracters to plot!")
-            return
-
-        await Plotter(args).plot_character(characters, args.message.channel)
-
-
-    async def _cmd_list(self, args):
-        """
-        "--league LEAGUE",
-        "--recent",
-        "--account ACCOUNT",
-        """
-        message = "```\n"
-        async for char in self.poe_sql.iter_characters():
-            # self.log.info(char)
-            # em.add_field(name=char['aname'], value=char['name'])
-            if args.league and args.league in char['league'].lower():
-                message += f"{char['name']:20} ({char['ac_name']})\n"
-            elif args.league is None:
-                message += f"{char['name']:20} ({char['ac_name']})\n"
-
-            if len(message) > 1900:
-                message += "```"
-                await args.message.author.send(message)
-                message = "```\n"
-
-
-        message += "```"
-        await args.message.author.send(message)
-        await args.message.channel.send("Lists are big, check your DMs.")
