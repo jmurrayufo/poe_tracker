@@ -12,6 +12,7 @@ from ..CommandProcessor.exceptions import NoValidCommands, HelpNeeded
 from ..Log import Log
 from .trade import trade_loop, post_process_loop
 from .accounts import accounts_loop, accounts_commands
+from ..watchdog import watchdog
 
 class POE:
 
@@ -42,6 +43,9 @@ class POE:
         # Create the POE loop to handle background activities
 
         await self.mongo.setup()
+
+        self.watchdog_loop = watchdog.Watchdog()
+        asyncio.create_task(self.watchdog_loop.loop())
 
         self.accounts_loop = accounts_loop.Accounts_Loop()
         asyncio.create_task(self.accounts_loop.loop())
