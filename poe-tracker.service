@@ -11,14 +11,18 @@ NotifyAccess=all
 
 ExecStart=/bin/bash ./run_bot_prod.sh
 WorkingDirectory=/home/discord/Git/poe_tracker
+Restart=always
+
+# Shutdown stuffs
+KillSignal=SIGINT
 
 User=discord
 Group=discord
 
 # Timer values
-TimeoutStartSec=120
-RestartSec=30
-WatchdogSec=120
+TimeoutStartSec=1m
+RestartSec=1m
+WatchdogSec=2m
 
 Environment=PYTHONUNBUFFERED=true
 
