@@ -181,9 +181,12 @@ def death_embed(character, death_dict=None):
     )
 
     if death_dict:
+        # Erase microseconds to make datetime prettier
+        t1 = death_dict['date'].replace(microsecond=0)
+        t2 = datetime.datetime.utcnow().replace(microsecond=0)
         em.add_field(
                 name="Time Just Lost",
-                value=f"||{death_dict['date']-datetime.datetime.utcnow()}||",
+                value=f"||{t2-t1}||",
                 inline=True
         )
 

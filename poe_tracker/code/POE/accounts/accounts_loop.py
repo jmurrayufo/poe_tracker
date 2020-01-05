@@ -16,6 +16,8 @@ from pymongo import ReturnDocument
 
 class Accounts_Loop:
 
+    influxDB_host = "http://192.168.4.3:8086"
+
     def __init__(self):
         self.log = Log()
         self.args = Args()
@@ -104,7 +106,7 @@ class Accounts_Loop:
                 {"name": character['name'],
                  "experience": character['experience'],
                  "level": character['level'],
-                 "date": datetime.datetime.now(),
+                 "date": datetime.datetime.utcnow(),
                  "league": character['league'],
                 }
         )
@@ -175,20 +177,51 @@ class Accounts_Loop:
 
         if deaths:
             channel_id = self.config[self.args.env]['discord']['death_announces']
-
+            _filter = {
+                    "name": character['name'],
+                    "experience":{"$lte":character['experience']}, 
+                    "date": {"$lt":datetime.datetime.utcnow() - datetime.timedelta(minutes=5)},
+            }
             death_dict = await self.db.characters.xp.find_one(
-                    {
-                        "name": character['name'],
-                        "experience":{"$lte":character['experience']}, 
-                        "date": {"$lt":dateime.datetime.utcnow() - datetime.timedelta(minutes=1)},
-                    }
+                    _filter,
+                    sort=[("date",-1)],
             )
 
             if channel_id:
                 channel = self.client.get_channel(channel_id)
                 await channel.send(embed=character_embeds.death_embed(updated_character, death_dict=death_dict))
 
+        await self.post_char_to_influx(character, account_name)
 
+    async def post_char_to_influx(self, char_dict, account_name):
+        """        
+        self.name = char_dict['name']
+        self.league = char_dict['league']
+        self.classId = char_dict['classId']
+        self.ascendancyClass = char_dict['ascendancyClass']
+        self._class = char_dict['class']
+        self.level = char_dict['level']
+        self.experience = char_dict['experience']
+        self.account = account
+        """
+
+        data = ""
+        data += f"xp,env={self.args.env},name={char_dict['name']},league={char_dict['league']},class={char_dict['class']},account={account_name} level={char_dict['level']},total={char_dict['experience']}"
+        self.log.debug(data)
+
+        host = self.influxDB_host + '/write'
+        params = {"db":"poe","precision":"m"}
+        try:
+            r = await httpx.post( host, params=params, data=data, timeout=1)
+            r.raise_for_status()
+            pass
+            # print(data)
+        except (KeyboardInterrupt, SystemExit, RuntimeError):
+            raise
+            return
+        except Exception as e:
+            self.log.exception("Posting to InfluxDB threw exception")
+            # continue
 # .find(
 # {
 #     "name":"SotonBuffUm", 

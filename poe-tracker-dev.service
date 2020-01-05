@@ -20,9 +20,9 @@ User=jmurray
 Group=jmurray
 
 # Timer values
-TimeoutStartSec=120
-RestartSec=30
-WatchdogSec=120
+TimeoutStartSec=1m
+RestartSec=1m
+WatchdogSec=2m
 
 Environment=PYTHONUNBUFFERED=true
 

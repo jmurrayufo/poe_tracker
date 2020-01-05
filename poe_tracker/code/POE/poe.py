@@ -42,10 +42,8 @@ class POE:
     async def on_ready(self):
         # Create the POE loop to handle background activities
 
+        self.log.info("Begin POE on_ready()")
         await self.mongo.setup()
-
-        self.watchdog_loop = watchdog.Watchdog()
-        asyncio.create_task(self.watchdog_loop.loop())
 
         self.accounts_loop = accounts_loop.Accounts_Loop()
         asyncio.create_task(self.accounts_loop.loop())
@@ -55,6 +53,9 @@ class POE:
 
         self.post_process_loop = post_process_loop.Post_Process_Loop()
         asyncio.create_task(self.post_process_loop.loop())
+
+        self.watchdog_loop = watchdog.Watchdog()
+        asyncio.create_task(self.watchdog_loop.loop())
 
         self.log.info("POE, ready to recieve commands!")
         self.ready = True
@@ -114,7 +115,7 @@ class POE:
         # Test various things
         sub_parser = sp.add_parser('test',
             description='Debug command (please ignore)',
-            test='Break shit')
+            help='Break shit')
         sub_parser.set_defaults(cmd=self.accounts_commands.test)
 
         # List off characters
