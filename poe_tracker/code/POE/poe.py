@@ -58,6 +58,14 @@ class POE:
         asyncio.create_task(self.watchdog_loop.loop())
 
         self.log.info("POE, ready to recieve commands!")
+        r = await self.client.change_presence(
+                activity=discord.Activity(
+                        id=0,
+                        name="POE Trade API", 
+                        type=discord.ActivityType.watching,
+                )
+        )
+        self.log.info(r)
         self.ready = True
 
 
@@ -187,9 +195,8 @@ class POE:
                 return
         except NoValidCommands as e:
             # We didn't get a subcommand, let someone else deal with this mess!
+            await message.channel.send(str(e))
             self.log.error(e)
-            self.log.error("???")
-            pass
         except HelpNeeded as e:
             self.log.info("TypeError Return")
             self.log.info(e)
