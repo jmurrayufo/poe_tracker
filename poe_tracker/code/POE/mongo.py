@@ -7,17 +7,30 @@ from pprint import pprint
 
 from ..Singleton import Singleton
 from ..Log import Log
+from ..args import Args
+import os
 
 class Mongo(metaclass=Singleton):
 
     def __init__(self):
         self.ready = False
         self.log = Log()
-        client = motor.motor_asyncio.AsyncIOMotorClient('atlas.lan:27017', 
-                                                        username='poe', 
-                                                        password='poe', 
-                                                        authSource='admin')
-        self.db = client.path_of_exile_dev
+        self.args = Args()
+
+        if self.args.env == 'dev':
+            self.log.info("Booting into dev env")
+            client = motor.motor_asyncio.AsyncIOMotorClient('atlas.lan:27017', 
+                                                            username=os.environ['MONGODB_USERNAME'], 
+                                                            password=os.environ['MONGODB_PASSWORD'], 
+                                                            authSource='admin')
+            self.db = client.path_of_exile_dev
+        if self.args.env == 'prod':
+            self.log.info("Booting into prod env")
+            client = motor.motor_asyncio.AsyncIOMotorClient('atlas.lan:27017', 
+                                                            username=os.environ['MONGODB_USERNAME'], 
+                                                            password=os.environ['MONGODB_PASSWORD'], 
+                                                            authSource='admin')
+            self.db = client.path_of_exile
         self.log.info("Mongo Connection init completed")
 
 

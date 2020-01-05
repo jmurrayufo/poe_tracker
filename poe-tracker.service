@@ -18,7 +18,7 @@ Group=discord
 # Timer values
 TimeoutStartSec=120
 RestartSec=30
-WatchdogSec=60
+WatchdogSec=120
 
 Environment=PYTHONUNBUFFERED=true
 

@@ -21,6 +21,7 @@ class Args(metaclass=Singleton):
 
         parser.add_argument('--env',
                             default="dev",
+                            choices=['dev','prod'],
                             help='Name environment')
 
         parser.add_argument('--token',
