@@ -50,7 +50,6 @@ class ChangeID:
     
 
     async def post_to_influx(self):
-        #TODO Hanlde dev/prod
         data = ""
         data += f"change_id,env={self.args.env},index=0 value={self.ids[0]}\n"
         data += f"change_id,env={self.args.env},index=1 value={self.ids[1]}\n"
