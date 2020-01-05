@@ -20,7 +20,7 @@ def ding_embed(character):
     em = discord.Embed(
             color = discord.Color.gold(),
             title=character['name'],
-            timestamp=datetime.datetime.now(),
+            timestamp=datetime.datetime.utcnow(),
             description=random.choice(fun_messages),
     )
 
@@ -140,7 +140,7 @@ def death_embed(character, death_dict=None):
     em = discord.Embed(
             color = discord.Color.dark_red(),
             title=character['name'],
-            timestamp=datetime.datetime.now(),
+            timestamp=datetime.datetime.utcnow(),
             description=random.choice(fun_messages),
     )
 

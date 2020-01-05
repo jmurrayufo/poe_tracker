@@ -22,7 +22,8 @@ class Log:
         elif args.log_level == 'DEBUG':
             self._log.setLevel(logging.DEBUG)
 
-        formatter = logging.Formatter('{asctime} {levelname} {filename}:{funcName}:{lineno} {message}', style='{')
+        # formatter = logging.Formatter('{asctime} {levelname} {filename}:{funcName}:{lineno} {message}', style='{')
+        formatter = logging.Formatter('{levelname} {filename}:{funcName}:{lineno} {message}', style='{')
         ch = logging.StreamHandler()
         ch.setLevel(logging.DEBUG)
         ch.setFormatter(formatter)
