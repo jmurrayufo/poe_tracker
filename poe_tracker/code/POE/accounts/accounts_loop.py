@@ -193,6 +193,7 @@ class Accounts_Loop:
 
         await self.post_char_to_influx(character, account_name)
 
+
     async def post_char_to_influx(self, char_dict, account_name):
         """        
         self.name = char_dict['name']

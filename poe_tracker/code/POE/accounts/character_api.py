@@ -98,8 +98,13 @@ class Character_Api(metaclass=Singleton):
         'X-Rate-Limit-Ip-State': '1:60:0,1:120:0',
         We need to allow for complex policies if given them, such as this list seperated one!
         """
-        policies = headers['X-Rate-Limit-Ip']
-        states = headers['X-Rate-Limit-Ip-State']
+        try:
+            policies = headers['X-Rate-Limit-Ip']
+            states = headers['X-Rate-Limit-Ip-State']
+        except KeyError:
+            self.log.exception("Headers didn't have expected values")
+            self.log.info(headers)
+            raise
         sleep_needed = 0
 
         policy_lists = []
