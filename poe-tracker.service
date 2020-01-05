@@ -15,6 +15,8 @@ WorkingDirectory=/home/discord/Git/poe_tracker
 User=discord
 Group=discord
 
+# Timer values
+TimeoutStartSec=120
 RestartSec=30
 WatchdogSec=60
 
