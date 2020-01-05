@@ -44,7 +44,14 @@ class Accounts_Loop:
 
             async for account in self.db.accounts.find():
                 self.log.debug(f"Update {account['accountName']}")
-                account_name, characters = await self.api.get_characters(account['accountName'])
+                try:
+                    account_name, characters = await self.api.get_characters(account['accountName'])
+                except (KeyboardInterrupt, SystemExit, RuntimeError):
+                    raise
+                except KeyError:
+                    await asyncio.sleep(5)
+                    continue
+
                 if account_name is None:
                     continue
                 for character in characters:
