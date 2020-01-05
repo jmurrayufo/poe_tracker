@@ -8,6 +8,7 @@ from .code.SQL import SQL
 from .code.POE import POE
 from .code.args import Args
 # from .code.Stats import Stats
+from . import version_info
 
 def main():
 
@@ -15,6 +16,8 @@ def main():
     args.parse()
 
     log = Log(args)
+
+    log.info(f"Started with {version_info}")
 
     log.info(args)
 
