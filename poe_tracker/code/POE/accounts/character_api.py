@@ -50,7 +50,7 @@ class Character_Api(metaclass=Singleton):
         r = await self._get(self.get_acct_url, params={"accountName":account})
         if r.status_code == 200:
             return account, r.json()
-        self.log.error(f"Got response of {r.text}, give up")
+        self.log.error(f"Got response of {r.status_code}, give up")
         return None, None
 
 
@@ -78,13 +78,16 @@ class Character_Api(metaclass=Singleton):
             self.log.debug(f"Calling with params {params}")
             r = await httpx.get(url, params=params)
             try:
+                r.raise_for_status()
                 await self.prime_timeout_avoidance(r.headers)
             except KeyError:
+                self.log.exception()
                 self.log.info(r)
                 self.log.info(r.status_code)
-                self.log.info(r.text)
-                raise
-            return r
+            except:
+                self.log.exception("Caught something!")
+            finally:
+                return r
 
 
     async def timeout_avoidance(self):
