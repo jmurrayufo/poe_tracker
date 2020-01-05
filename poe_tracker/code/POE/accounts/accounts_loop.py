@@ -62,6 +62,7 @@ class Accounts_Loop:
     async def update_character(self, account_name, character):
         db_account = await self.db.accounts.find_one({"accountName":account_name})
         db_character = await self.db.characters.find_one({"name":character['name']})
+        now = datetime.datetime.utcnow()
         
         if db_character is None:
             db_character = await self.db.characters.find_one_and_update(
@@ -80,7 +81,7 @@ class Accounts_Loop:
                     },
                     "$setOnInsert": 
                     {
-                         "creationDate":datetime.datetime.utcnow(),
+                         "creationDate": now,
                          "stats": 
                          {
                              "total_experience": 0,
@@ -122,18 +123,18 @@ class Accounts_Loop:
                 deaths /= 0.1
             else:
                 deaths /= 0.05
-            self.log.info(f"Calculate a death at {deaths}")
             deaths = max(int(round(deaths)),1)
 
         lost_xp = max(0, db_character['experience'] - character['experience'])
         gained_xp = max(0, character['experience'] - db_character['experience'])
         if datetime.datetime.utcnow() - db_character['lastActive'] < datetime.timedelta(minutes=15):
-            playtime = datetime.datetime.utcnow() - db_character['lastActive']
+            playtime = now - db_character['lastActive']
             playtime = playtime.total_seconds()
         else:
             playtime = 0
 
         # Pull the actual character JSON for use with deaths/dings
+        lastActive = datetime.datetime.utcnow()
         updated_character = await self.db.characters.find_one_and_update(
                 {"name":character['name']},
                 {
@@ -141,7 +142,7 @@ class Accounts_Loop:
                     {
                         "experience": character['experience'],
                         "level": character['level'],
-                        "lastActive": datetime.datetime.utcnow(),
+                        "lastActive": now,
                     },
                     "$inc":
                     {
@@ -180,7 +181,7 @@ class Accounts_Loop:
             _filter = {
                     "name": character['name'],
                     "experience":{"$lte":character['experience']}, 
-                    "date": {"$lt":datetime.datetime.utcnow() - datetime.timedelta(minutes=5)},
+                    "date": {"$lt":now},
             }
             death_dict = await self.db.characters.xp.find_one(
                     _filter,
