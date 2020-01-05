@@ -7,7 +7,7 @@ After=multi-user.target
 # Note that we use Type=notify here since test.py will send "READY=1"
 # when it's finished starting up. Could be 'Type=simple' if we didn't.
 Type=notify
-NotifyAccess=exec
+NotifyAccess=all
 
 ExecStart=/bin/bash ./run_bot_prod.sh
 WorkingDirectory=/home/discord/Git/poe_tracker
