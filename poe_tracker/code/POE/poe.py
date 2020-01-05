@@ -115,7 +115,7 @@ class POE:
         # Test various things
         sub_parser = sp.add_parser('test',
             description='Debug command (please ignore)',
-            test='Break shit')
+            help='Break shit')
         sub_parser.set_defaults(cmd=self.accounts_commands.test)
 
         # List off characters
