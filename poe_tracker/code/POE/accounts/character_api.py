@@ -77,7 +77,13 @@ class Character_Api(metaclass=Singleton):
             await self.timeout_avoidance()
             self.log.debug(f"Calling with params {params}")
             r = await httpx.get(url, params=params)
-            await self.prime_timeout_avoidance(r.headers)
+            try:
+                await self.prime_timeout_avoidance(r.headers)
+            except KeyError:
+                self.log.info(r)
+                self.log.info(r.status_code)
+                self.log.info(r.text)
+                raise
             return r
 
 
