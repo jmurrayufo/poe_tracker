@@ -40,7 +40,7 @@ class Plotter:
         for character in characters:
             x = []
             y = []
-            async for xp_dict in self.db.characters.xp.find({"name":character},sort=[("date":-1)]):
+            async for xp_dict in self.db.characters.xp.find({"name":character},sort=[("date",-1)]):
                 # Filter out items if we only want recent data
                 if args.recent:
                     if (datetime.datetime.utcnow() - xp_dict['date']).total_seconds()/60/60 > args.recent:
