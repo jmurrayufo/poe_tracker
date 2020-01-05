@@ -2,12 +2,12 @@
 import pymongo
 import datetime
 import motor.motor_asyncio
-
-from pprint import pprint
+import asyncio
 
 from ..Singleton import Singleton
 from ..Log import Log
 from ..args import Args
+from ..watchdog import watchdog
 import os
 
 class Mongo(metaclass=Singleton):
@@ -39,6 +39,7 @@ class Mongo(metaclass=Singleton):
         """
         self.log.info("Begin mongo setup")
 
+        boot_task = asyncio.create_task(self.boot_loop())
 
         # db.cache
         self.log.info("Setup db.cache")
@@ -220,6 +221,23 @@ class Mongo(metaclass=Singleton):
             [('accountName', 1)],
             name="accountName",
             )
-
+        
+        boot_task.cancel()
 
         self.log.info("Finish mongo setup")
+
+
+    async def boot_loop(self):
+        """While booting, request more time from the notification system while we wait for mongo to do it's thing.
+        """
+        await asyncio.sleep(5)
+        self.log.info("Taking a while to boot, lets remind the system to let us boot.")
+
+        wd = watchdog.Watchdog()
+        try:
+            while 1:
+                wd.long_boot(1)
+                await asyncio.sleep(30)
+                self.log.debug("Loop...")
+        finally:
+            self.log.info("Finished boot looper")
