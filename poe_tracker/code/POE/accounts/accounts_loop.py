@@ -48,7 +48,7 @@ class Accounts_Loop:
                     account_name, characters = await self.api.get_characters(account['accountName'])
                 except (KeyboardInterrupt, SystemExit, RuntimeError):
                     raise
-                except KeyError:
+                except (KeyError, httpx.exceptions.HTTPError):
                     await asyncio.sleep(5)
                     continue
 
