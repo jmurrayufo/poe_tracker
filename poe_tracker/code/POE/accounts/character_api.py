@@ -77,7 +77,13 @@ class Character_Api(metaclass=Singleton):
             await self.timeout_avoidance()
             self.log.debug(f"Calling with params {params}")
             r = await httpx.get(url, params=params)
-            await self.prime_timeout_avoidance(r.headers)
+            try:
+                await self.prime_timeout_avoidance(r.headers)
+            except KeyError:
+                self.log.info(r)
+                self.log.info(r.status_code)
+                self.log.info(r.text)
+                raise
             return r
 
 
@@ -98,8 +104,13 @@ class Character_Api(metaclass=Singleton):
         'X-Rate-Limit-Ip-State': '1:60:0,1:120:0',
         We need to allow for complex policies if given them, such as this list seperated one!
         """
-        policies = headers['X-Rate-Limit-Ip']
-        states = headers['X-Rate-Limit-Ip-State']
+        try:
+            policies = headers['X-Rate-Limit-Ip']
+            states = headers['X-Rate-Limit-Ip-State']
+        except KeyError:
+            self.log.exception("Headers didn't have expected values")
+            self.log.info(headers)
+            raise
         sleep_needed = 0
 
         policy_lists = []
