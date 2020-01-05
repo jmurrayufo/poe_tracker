@@ -177,11 +177,12 @@ class Accounts_Loop:
 
         # Handle any messages to discord
         if character['level'] != db_character['level']:
-            # We had a ding!
-            channel_id = self.config[self.args.env]['discord']['death_announces']
-            if channel_id:
-                channel = self.client.get_channel(channel_id)
-                await channel.send(embed=character_embeds.ding_embed(updated_character))
+            if character['level'] > 50 or character['level'] % 5 == 0:
+                # We had a ding!
+                channel_id = self.config[self.args.env]['discord']['death_announces']
+                if channel_id:
+                    channel = self.client.get_channel(channel_id)
+                    await channel.send(embed=character_embeds.ding_embed(updated_character))
 
         if deaths:
             channel_id = self.config[self.args.env]['discord']['death_announces']

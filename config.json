@@ -1,7 +1,7 @@
 {
     "dev": {
         "characters": {
-            "track": true,
+            "track": false,
             "time_between_updates": 60
         },
         "trade": {

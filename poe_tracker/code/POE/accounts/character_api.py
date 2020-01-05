@@ -84,7 +84,7 @@ class Character_Api(metaclass=Singleton):
                 self.log.exception()
                 self.log.info(r)
                 self.log.info(r.status_code)
-            except:
+            except httpx.exceptions.HTTPError:
                 self.log.exception("Caught something!")
             finally:
                 return r
