@@ -9,11 +9,15 @@ After=multi-user.target
 Type=notify
 NotifyAccess=all
 
-ExecStart=/bin/bash ./run_bot_prod.sh
-WorkingDirectory=/home/discord/Git/poe_tracker
+ExecStart=/bin/bash ./run_bot_dev.sh
+WorkingDirectory=/home/jmurray/Git/poe_tracker
+Restart=always
 
-User=discord
-Group=discord
+# Shutdown stuffs
+KillSignal=SIGINT
+
+User=jmurray
+Group=jmurray
 
 # Timer values
 TimeoutStartSec=120
