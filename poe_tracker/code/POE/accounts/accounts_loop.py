@@ -180,7 +180,7 @@ class Accounts_Loop:
                     {
                         "name": character['name'],
                         "experience":{"$lte":character['experience']}, 
-                        "date": {"$lt":dateime.datetime.utcnow() - datetime.timedelta(minutes=1)},
+                        "date": {"$lt":datetime.datetime.utcnow() - datetime.timedelta(minutes=1)},
                     }
             )
 
