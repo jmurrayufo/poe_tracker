@@ -61,7 +61,7 @@ class CleanupLoop:
             t1 = time.time()
             async for stash in self.db.stashes.find({"_updatedAt": {"$gt": updated_pointer}}, sort=[('_updatedAt', 1)]):
                 await asyncio.sleep(0)
-                if time.time() - start_update > 300:
+                if time.time() - start_update > 60:
                     break
                 updated_pointer = stash['_updatedAt']
 

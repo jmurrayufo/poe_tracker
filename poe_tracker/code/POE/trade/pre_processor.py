@@ -29,12 +29,12 @@ class PreProcessor:
         op = pymongo.UpdateOne(
             {
                 "name": "trade",
-                "filter_updated_pointer": {"$lt": now}
+                "change_id_last_update": {"$lt": now}
             },
             {'$set': 
                 {
                     'current_next_id': api_dict['next_change_id'],
-                    'filter_updated_pointer': now,
+                    'change_id_last_update': now,
                 }
             }
         )
@@ -80,8 +80,11 @@ class PreProcessor:
         """
 
         # TODO: If the item doesn't have a note, check to see if the stash has a valid note?
-        # if 'note' not in item:
-        #     continue
+        if 'note' not in item_dict:
+            if not stash_dict['stash'].startswith("~"):
+                return None
+            item_dict['note'] = stash_dict['stash']
+
         item_dict['stash_id'] = stash_dict['id']
         item_dict.pop("descrText", None)
         item_dict.pop("flavourText", None)
@@ -115,18 +118,21 @@ class PreProcessor:
         """Given some currency from the API, process it fully into the DB
         """
 
-        # We are currently a NOP
-        return
-
+        item_dict.pop("identified", None)
+        item_dict.pop("inventoryId", None)
+        item_dict.pop("properties", None)
+        item_dict.pop("extended", None)
 
         op = pymongo.UpdateOne(
                 {"id":item_dict['id']},
                 {
                     "$setOnInsert": {
-                        "_createdAt": datetime.datetime.utcnow(),
-                        "_sold": False
+                        "_createdAt": datetime.datetime.utcnow()
                     },
-                    "$set": {**item_dict, "_updatedAt": datetime.datetime.utcnow()}
+                    "$set": {
+                        **item_dict, 
+                        "_updatedAt": datetime.datetime.utcnow(),
+                    }
                 },
                 upsert=True
         )
