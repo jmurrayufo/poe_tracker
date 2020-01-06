@@ -174,7 +174,7 @@ class Mongo(metaclass=Singleton):
             await self.db.items.currency.create_index(
                 [('_updatedAt', 1)],
                 name="updatedAt",
-                expireAfterSeconds=1*24*60*60
+                expireAfterSeconds=1*6*60*60
                 )
 
 

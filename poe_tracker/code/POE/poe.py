@@ -10,7 +10,7 @@ from ..Client import Client
 from ..CommandProcessor import DiscordArgumentParser, ValidUserAction
 from ..CommandProcessor.exceptions import NoValidCommands, HelpNeeded
 from ..Log import Log
-from .trade import trade_loop, cleanup_loop
+from .trade import trade_loop, cleanup_loop, trade_commands
 from .accounts import accounts_loop, accounts_commands
 from ..watchdog import watchdog
 
@@ -23,6 +23,7 @@ class POE:
         self.mongo = mongo.Mongo()
         self.args = Args()
         self.accounts_commands = accounts_commands.Accounts_Commands()
+        self.trade_commands = trade_commands.TradeCommands()
 
 
     async def on_message(self, message):
@@ -124,7 +125,11 @@ class POE:
         sub_parser = sp.add_parser('test',
             description='Debug command (please ignore)',
             help='Break shit')
-        sub_parser.set_defaults(cmd=self.accounts_commands.test)
+        sub_parser.add_argument(
+            "currency",
+            help="Currency to price",
+        )
+        sub_parser.set_defaults(cmd=self.trade_commands.test)
 
         # List off characters
         sub_parser = sp.add_parser('list',

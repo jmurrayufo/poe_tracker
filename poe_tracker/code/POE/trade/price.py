@@ -51,6 +51,9 @@ class Price:
         self.value_name = "UNKNOWN"
         self.log = Log()
 
+    def __str__(self):
+        return f"P(v={self.value}, n={self.value_name})"
+
     @property
     def cost(self):
         """
@@ -64,24 +67,16 @@ class Price:
             False on unparasble or missing note field
         """
         # Parse out the notes field if we can
-        # self.log.info(f"Attemt to split {self.note}")
         match_obj = self.price_re.search(self.note)
         if not match_obj:
-            # self.log.error("Parse failed")
-            # with open("errors.txt","a") as fp:
-            #     fp.write(f"{self.note}\n")
             return False
 
         try:
             self.value = eval(match_obj.group(2)) if match_obj.group(2) is not None else 1
         except (SyntaxError, ZeroDivisionError):
-            # self.log.exception("Eval errored out, catch and return")
             return False
 
         if type(self.value) not in [float,int]:
-            # with open("errors.txt","a") as fp:
-            #     fp.write(f"{self.note}\n")
-            # self.log.error("Failed to parse")
             self.value = 0
             self.value_name = "UNKNOWN"
             return False
