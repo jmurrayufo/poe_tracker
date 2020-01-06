@@ -52,8 +52,8 @@ class PreProcessor:
 
         # Loop through items and build list of `id`s.
         new_ids = []
-        for item in stash_dict['items']:
-            _id = await self.process_item(item, stash_dict)
+        for item_dict in stash_dict['items']:
+            _id = await self.process_item(item_dict, stash_dict)
             if _id is None:
                 continue
             new_ids.append(_id)
@@ -61,6 +61,7 @@ class PreProcessor:
         # Repalce `items` field with array of `id` values
         stash_dict['items'] = new_ids
 
+        # Commit to mongodb
         op = pymongo.UpdateOne(
                 {"id":stash_dict['id']},
                 {
@@ -70,7 +71,6 @@ class PreProcessor:
                 upsert=True
         )
         await self.mongo.bulk_write(op, "stashes")
-        # Commit to mongodb
 
 
     async def process_item(self, item_dict, stash_dict):
@@ -105,10 +105,31 @@ class PreProcessor:
 
         await self.mongo.bulk_write(op, "items")
 
+        if item_dict['extended']['category'] == 'currency':
+            await self.process_currency(item_dict)
+
         return item_dict['id']
 
 
     async def process_currency(self, item_dict):
         """Given some currency from the API, process it fully into the DB
         """
+
+        # We are currently a NOP
+        return
+
+
+        op = pymongo.UpdateOne(
+                {"id":item_dict['id']},
+                {
+                    "$setOnInsert": {
+                        "_createdAt": datetime.datetime.utcnow(),
+                        "_sold": False
+                    },
+                    "$set": {**item_dict, "_updatedAt": datetime.datetime.utcnow()}
+                },
+                upsert=True
+        )
+
+        await self.mongo.bulk_write(op, "items.currency")
 

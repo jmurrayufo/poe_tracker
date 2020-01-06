@@ -3,13 +3,15 @@ import requests
 import httpx
 
 from ...args import Args
+from ...Log import Log
 
 class ChangeID:
 
     influxDB_host = "http://192.168.4.3:8086"
     args = Args()
-
+    log = Log()
     def __init__(self, *args):
+
         self.ids = [1,1,1,1,1]
         if len(args) == 5:
             for idx in range(5):
