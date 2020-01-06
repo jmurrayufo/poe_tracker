@@ -89,6 +89,7 @@ class PreProcessor:
         item_dict.pop("descrText", None)
         item_dict.pop("flavourText", None)
         item_dict.pop("icon", None)
+        item_dict.pop("socketedItems", None)
 
         if 'id' not in item_dict:
             return None
@@ -140,4 +141,3 @@ class PreProcessor:
         )
 
         await self.mongo.bulk_write(op, "items.currency")
-

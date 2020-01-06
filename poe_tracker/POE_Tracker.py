@@ -34,13 +34,15 @@ def main():
     # Register all modules here #
     #############################
 
-
-    if args.token:
-        log.info("Using token from args")
-        x.run(args.token)
-    elif os.environ.get('CLIENT_TOKEN', None):
-        log.info("Using token from ENV")
-        x.run(os.environ['CLIENT_TOKEN'])
-    else:
-        log.critical("No token was given in the arguments or the ENV!")
-        raise RuntimeError("No valid token given, cannot start bot!")
+    try:
+        if args.token:
+            log.info("Using token from args")
+            x.run(args.token)
+        elif os.environ.get('CLIENT_TOKEN', None):
+            log.info("Using token from ENV")
+            x.run(os.environ['CLIENT_TOKEN'])
+        else:
+            log.critical("No token was given in the arguments or the ENV!")
+            raise RuntimeError("No valid token given, cannot start bot!")
+    finally:
+        log.critical("Shutdown complete")
