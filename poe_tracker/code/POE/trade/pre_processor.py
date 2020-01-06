@@ -122,6 +122,8 @@ class PreProcessor:
         item_dict.pop("inventoryId", None)
         item_dict.pop("properties", None)
         item_dict.pop("extended", None)
+        item_dict.pop("prophecyText", None)
+        item_dict.pop("explicitMods", None)
 
         op = pymongo.UpdateOne(
                 {"id":item_dict['id']},
