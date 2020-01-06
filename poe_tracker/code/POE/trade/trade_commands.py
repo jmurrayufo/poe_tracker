@@ -18,6 +18,18 @@ class TradeCommands:
         self.args = Args()
 
     async def test(self, args):
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        import io
+        import discord
+
+        def reject_outliers(data, m = 2.):
+            d = np.abs(data - np.median(data))
+            mdev = np.median(d)
+            s = d/mdev if mdev else 0.
+            return data[s<m]
+
         # self.log.info(f"Ran test with {args}")
         await args.message.channel.send("Hello!")
 
@@ -45,6 +57,10 @@ class TradeCommands:
                 values.append(p)
         
         values = [p.value for p in values]
+        values = np.asarray(values)
+
+        values = reject_outliers(values, m=5)
+
         mean = np.mean(values)
         median = np.median(values)
         stddev = np.std(values)
@@ -61,6 +77,16 @@ class TradeCommands:
         await args.message.channel.send(f"Estimated at {est}C with a stddev of {stddev:.3f}")
 
 
+        plt.hist(values, bins=100)
+        plt.grid()
 
-        
+        # Save figure to ram for printing to discord
+        self.log.info("Write plots to buffer")
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', bbox_inches='tight',dpi=100)
+        buf.seek(0)
+        f = discord.File(buf, filename="chart.png")
 
+        # Send message to discord
+        self.log.info("Send to discord")
+        await args.message.channel.send(file=f)

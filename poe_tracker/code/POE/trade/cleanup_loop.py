@@ -52,7 +52,7 @@ class CleanupLoop:
 
             # self.log.info(f"Currently {datetime.datetime.utcnow() - updated_pointer} behind")
 
-            while (datetime.datetime.utcnow() - updated_pointer) < datetime.timedelta(minutes=30):
+            while (datetime.datetime.utcnow() - updated_pointer) < datetime.timedelta(minutes=60):
                 await asyncio.sleep(15)
             start_update = time.time()
 
@@ -61,9 +61,11 @@ class CleanupLoop:
             t1 = time.time()
             async for stash in self.db.stashes.find({"_updatedAt": {"$gt": updated_pointer}}, sort=[('_updatedAt', 1)]):
                 await asyncio.sleep(0)
-                if time.time() - start_update > 60:
-                    break
+                
                 updated_pointer = stash['_updatedAt']
+
+                if (datetime.datetime.utcnow() - updated_pointer) < datetime.timedelta(minutes=30):
+                    break
 
                 #TODO: Copy currency items up to the currency self.DB
 
