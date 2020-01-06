@@ -104,3 +104,8 @@ class CleanupLoop:
             await self.db.cache.update_one({"name":"trade"},{"$set":{"filter_updated_pointer":updated_pointer}})
             self.log.info(f"Cleaning {element/(time.time()-t1):,.0f} stashes/s. Found {sold:,d}/{element:,d} missing items. Currently {datetime.datetime.utcnow() - updated_pointer} behind")
             await asyncio.sleep(1)
+
+
+    async def push_influx_stats(self):
+
+        pass

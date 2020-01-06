@@ -52,8 +52,8 @@ class POE:
         self.trade_loop = trade_loop.Trade_Loop(self.args)
         asyncio.create_task(self.trade_loop.loop())
 
-        self.cleanup_loop = cleanup_loop.CleanupLoop()
-        asyncio.create_task(self.cleanup_loop.loop())
+        # self.cleanup_loop = cleanup_loop.CleanupLoop()
+        # asyncio.create_task(self.cleanup_loop.loop())
 
         self.watchdog_loop = watchdog.Watchdog()
         asyncio.create_task(self.watchdog_loop.loop())

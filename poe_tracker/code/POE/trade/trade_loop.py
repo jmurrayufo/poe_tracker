@@ -15,7 +15,7 @@ from ...Log import Log
 from .change_id import ChangeID
 from .api import TradeAPI
 from .. import mongo
-from . import pre_processor
+from . import pre_processor, post_processor
 
 class Trade_Loop:
 
@@ -33,16 +33,24 @@ class Trade_Loop:
         Run the main loop of tracking various POE stuffs
         """
         self.log.info(f"Booted trade loop")
-        if not self.config[self.args.env]['trade']['ingest']:
+        if self.config[self.args.env]['trade']['ingest']:
+            ingest_to_db_task = asyncio.create_task(self.ingest_to_db())
+            queue_stash_task = asyncio.create_task(self.queue_up_stashes())
+        else:
+            ingest_to_db_task = None
+            queue_stash_task = None
             self.log.warning("Config was set to not ingest trading. Aborting trade_loop.")
-            return
-        ingest_to_db_task = asyncio.create_task(self.ingest_to_db())
-        queue_stash_task = asyncio.create_task(self.queue_up_stashes())
+
+        if self.config[self.args.env]['trade']['post_process']:
+            cleaner_task = asyncio.create_task(self.cleaner())
+        else:
+            cleaner_task = None
+            self.log.warning("Config was set to not process trading. Aborting post_process_loop.")
 
         while 1:
             await asyncio.sleep(1)
 
-            if ingest_to_db_task.done():
+            if ingest_to_db_task and ingest_to_db_task.done():
                 try:
                     r = ingest_to_db_task.result()
                 except (KeyboardInterrupt, SystemExit):
@@ -52,7 +60,7 @@ class Trade_Loop:
                 self.log.info("Restarting ingest_to_db")
                 ingest_to_db_task = asyncio.create_task(self.ingest_to_db())
 
-            if queue_stash_task.done():
+            if queue_stash_task and queue_stash_task.done():
                 try:
                     r = queue_stash_task.result()
                 except (KeyboardInterrupt, SystemExit):
@@ -61,6 +69,16 @@ class Trade_Loop:
                     self.log.exception("Task threw exception")
                 self.log.info("Restarting queue_up_stashes")
                 queue_stash_task = asyncio.create_task(self.queue_up_stashes())
+
+            if cleaner_task and cleaner_task.done():
+                try:
+                    r = cleaner_task.result()
+                except (KeyboardInterrupt, SystemExit):
+                    return
+                except Exception as e:
+                    self.log.exception("Task threw exception")
+                self.log.info("Restarting cleaner")
+                cleaner_task = asyncio.create_task(self.cleaner())
 
 
     async def ingest_to_db(self):
@@ -86,6 +104,7 @@ class Trade_Loop:
                 last_poe_ninja_update = time.time()
                 self.log.info(f"ChangeID: {last_good_change_id}")
 
+
     async def queue_up_stashes(self):
 
         self.log.info("Begin queue_up_stashes")
@@ -102,3 +121,23 @@ class Trade_Loop:
             await self.api_queue.put(data)
             # Allow other tasks to run
             await asyncio.sleep((self.api_queue.qsize()/10)**2)
+
+
+    async def cleaner(self):
+        self.log.info("Begin cleaning updated items")
+
+        post_proc =  post_processor.PostProcessor()
+
+        next_scub = datetime.datetime.now()
+        
+        while 1:
+            if datetime.datetime.now() < next_scub:
+                dt = next_scub - datetime.datetime.now()
+                dt = dt.total_seconds()
+                dt = max(0, dt)
+                await asyncio.sleep(dt)
+            
+            await post_proc.clean_pass(60)
+            await post_proc.push_influx_stats()
+
+            next_scub += datetime.timedelta(minutes=1)
