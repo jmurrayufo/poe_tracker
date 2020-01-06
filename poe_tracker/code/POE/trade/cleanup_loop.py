@@ -10,7 +10,7 @@ from .change_id import ChangeID
 from .api import TradeAPI
 from .. import mongo
 
-class Post_Process_Loop:
+class CleanupLoop:
 
     def __init__(self):
         self.log = Log()

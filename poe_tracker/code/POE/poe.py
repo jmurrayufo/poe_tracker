@@ -10,7 +10,7 @@ from ..Client import Client
 from ..CommandProcessor import DiscordArgumentParser, ValidUserAction
 from ..CommandProcessor.exceptions import NoValidCommands, HelpNeeded
 from ..Log import Log
-from .trade import trade_loop, post_process_loop
+from .trade import trade_loop, cleanup_loop
 from .accounts import accounts_loop, accounts_commands
 from ..watchdog import watchdog
 
@@ -51,8 +51,8 @@ class POE:
         self.trade_loop = trade_loop.Trade_Loop(self.args)
         asyncio.create_task(self.trade_loop.loop())
 
-        self.post_process_loop = post_process_loop.Post_Process_Loop()
-        asyncio.create_task(self.post_process_loop.loop())
+        self.cleanup_loop = cleanup_loop.CleanupLoop()
+        asyncio.create_task(self.cleanup_loop.loop())
 
         self.watchdog_loop = watchdog.Watchdog()
         asyncio.create_task(self.watchdog_loop.loop())
