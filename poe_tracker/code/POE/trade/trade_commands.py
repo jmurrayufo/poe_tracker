@@ -31,7 +31,7 @@ class TradeCommands:
             return data[s<m]
 
         # self.log.info(f"Ran test with {args}")
-        await args.message.channel.send("Hello!")
+        # await args.message.channel.send("Hello!")
 
         args.currency = ' '.join(args.currency)
 
@@ -59,7 +59,7 @@ class TradeCommands:
         values = [p.value for p in values]
         values = np.asarray(values)
 
-        values = reject_outliers(values, m=5)
+        values = reject_outliers(values, m=2)
 
         mean = np.mean(values)
         median = np.median(values)
@@ -76,17 +76,25 @@ class TradeCommands:
         await args.message.channel.send(f"Found {len(values):,d}") 
         await args.message.channel.send(f"Estimated at {est}C with a stddev of {stddev:.3f}")
 
+        if args.plot:
 
-        plt.hist(values, bins=100)
-        plt.grid()
+            plt.hist(values, bins=100)
+            # plt.grid()
 
-        # Save figure to ram for printing to discord
-        self.log.info("Write plots to buffer")
-        buf = io.BytesIO()
-        plt.savefig(buf, format='png', bbox_inches='tight',dpi=100)
-        buf.seek(0)
-        f = discord.File(buf, filename="chart.png")
+            # Save figure to ram for printing to discord
+            self.log.info("Write plots to buffer")
+            buf = io.BytesIO()
+            plt.savefig(buf, format='png', bbox_inches='tight',dpi=100)
+            
+            plt.clf()
+            plt.cla()
+            plt.close()
 
-        # Send message to discord
-        self.log.info("Send to discord")
-        await args.message.channel.send(file=f)
+            buf.seek(0)
+            f = discord.File(buf, filename="chart.png")
+
+            # Send message to discord
+            self.log.info("Send to discord")
+            await args.message.channel.send(file=f)
+
+

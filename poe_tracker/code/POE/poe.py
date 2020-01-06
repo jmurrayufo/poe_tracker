@@ -85,6 +85,22 @@ class POE:
         parser.set_defaults(message=message)
         sp = parser.add_subparsers()
 
+        # Test various things
+        sub_parser = sp.add_parser('test',
+            description='Debug command (please ignore)',
+            help='Break shit')
+        sub_parser.add_argument(
+            "currency",
+            help="Currency to price",
+            nargs='+',
+        )
+        sub_parser.add_argument(
+            "--plot",
+            action='store_true',
+            help="Provide usefull plots",
+        )
+        sub_parser.set_defaults(cmd=self.trade_commands.test)
+
         # Register new users
         sub_parser = sp.add_parser('register',
             description='Register a user account for tracking',
@@ -120,17 +136,6 @@ class POE:
             type=int,
         )
         sub_parser.set_defaults(cmd=self.accounts_commands.leaderboard)
-
-        # Test various things
-        sub_parser = sp.add_parser('test',
-            description='Debug command (please ignore)',
-            help='Break shit')
-        sub_parser.add_argument(
-            "currency",
-            help="Currency to price",
-            nargs='+',
-        )
-        sub_parser.set_defaults(cmd=self.trade_commands.test)
 
         # List off characters
         sub_parser = sp.add_parser('list',
