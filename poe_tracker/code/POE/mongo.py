@@ -10,6 +10,8 @@ from ..args import Args
 from ..watchdog import watchdog
 import os
 
+from collections import defaultdict
+
 class Mongo(metaclass=Singleton):
 
     def __init__(self):
@@ -33,6 +35,10 @@ class Mongo(metaclass=Singleton):
             self.db = client.path_of_exile
         self.log.info("Mongo Connection init completed")
 
+        # No bulk write operations in progress
+        self.bulk_write_task = None
+        self.bulk_write_queues = defaultdict(lambda: [])
+        self.lock = asyncio.Lock()
 
     async def setup(self):
         """Ensure DB is setup for use
@@ -251,3 +257,43 @@ class Mongo(metaclass=Singleton):
                 self.log.debug("Loop...")
         finally:
             self.log.info("Finished boot looper")
+
+
+    async def bulk_write(self, op, queue_name):
+        # We accept both single operations, and bulk writes
+        async with self.lock:
+            if type(op) in [list,tuple]:
+                for o in op:
+                    self.bulk_write_queues[queue_name].append(o)
+            else:
+                self.bulk_write_queues[queue_name].append(op)
+        if self.bulk_write_task is None:
+            self.bulk_write_task = asyncio.create_task(self.write_worker())
+
+
+    async def write_worker(self):
+        """Background task to commit writes to the DB
+        """
+        # Queue up writes for 15 seconds, then burst to server.
+        # TODO: Make config value
+        await asyncio.sleep(1)
+
+        for queue in self.bulk_write_queues:
+            if len(self.bulk_write_queues[queue]):
+                break
+        else:
+            self.bulk_write_task = None
+            return
+
+        async with self.lock:
+            for queue in self.bulk_write_queues:
+                if len(self.bulk_write_queues[queue]) == 0:
+                    continue
+                ops = self.bulk_write_queues[queue]
+                # Blank out list to allow fresh new one for next insert
+                self.bulk_write_queues[queue] = []
+
+                col = self.db.get_collection(name=queue)
+                await col.bulk_write(ops, ordered=False)
+
+        self.bulk_write_task = asyncio.create_task(self.write_worker())
