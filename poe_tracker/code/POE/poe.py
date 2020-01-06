@@ -128,6 +128,7 @@ class POE:
         sub_parser.add_argument(
             "currency",
             help="Currency to price",
+            nargs='+',
         )
         sub_parser.set_defaults(cmd=self.trade_commands.test)
 
