@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
-import pymongo
-import datetime
-import time
-from poe_tracker.code.POE.trade.price import Price
 
 from collections import defaultdict
+from poe_tracker.code.POE.trade.price import Price
+import datetime
+import pymongo
+import re
+import time
+from pprint import pprint
 
 # tzinfo.utcoffset
 client = pymongo.MongoClient('atlas.lan:27017', 
@@ -15,21 +17,10 @@ client = pymongo.MongoClient('atlas.lan:27017',
 
 m_db = client.path_of_exile_dev
 
-types = set()
-num = 0
+values = defaultdict(lambda: 0)
 try:
-    for item in m_db.items.find({"extended":{"$exists":1}}):
-        num += 1
-        if 'subcategories' in item['extended']:
-            for cat in item['extended']['subcategories']:
-                types.add(f"{item['extended']['category']}.{cat}")
-        else:
-            types.add(f"{item['extended']['category']}")
-except:
-    pass
+    for item in m_db.items.find({"_value_name":{"$exists":1}}):
+        values[item['_value_name']] += 1
 finally:
-    print()
-    print(num)
-    types = sorted([i for i in types])
+    pprint(values)
 
-    print(types)

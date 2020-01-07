@@ -85,10 +85,25 @@ class POE:
         parser.set_defaults(message=message)
         sp = parser.add_subparsers()
 
-        # Test various things
+        # Test things
         sub_parser = sp.add_parser('test',
-            description='Debug command (please ignore)',
-            help='Break shit')
+            description='Estimate current currency values',
+        )
+        sub_parser.add_argument(
+            "account",
+            help="Name of account to check against",
+        )
+        sub_parser.add_argument(
+            "tab_name",
+            help="Name of stash to price check",
+        )
+        sub_parser.set_defaults(cmd=self.trade_commands.test)
+
+
+        # Show currency valuations
+        sub_parser = sp.add_parser('currency',
+            description='Estimate current currency values',
+        )
         sub_parser.add_argument(
             "currency",
             help="Currency to price",
@@ -99,7 +114,7 @@ class POE:
             action='store_true',
             help="Provide usefull plots",
         )
-        sub_parser.set_defaults(cmd=self.trade_commands.test)
+        sub_parser.set_defaults(cmd=self.trade_commands.currency)
 
         # Register new users
         sub_parser = sp.add_parser('register',

@@ -90,3 +90,8 @@ class Price:
 
         return True
 
+class Estimate:
+
+    def __init__(self, m=2):
+        self.m=m
+

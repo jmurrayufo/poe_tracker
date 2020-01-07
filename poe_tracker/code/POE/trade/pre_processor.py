@@ -81,15 +81,15 @@ class PreProcessor:
 
         # TODO: If the item doesn't have a note, check to see if the stash has a valid note?
         if 'note' not in item_dict:
-            if not stash_dict['stash'].startswith("~"):
-                return None
-            item_dict['note'] = stash_dict['stash']
+            if stash_dict['stash'].startswith("~"):
+                item_dict['note'] = stash_dict['stash']
 
-        # Parse out price, save if good
-        price = Price(item_dict['note'])
-        if price.parse():
-            item_dict['_value'] = price.value
-            item_dict['_value_name'] = price.value_name
+        if 'note' in item_dict:
+            # Parse out price, save if good
+            price = Price(item_dict['note'])
+            if price.parse():
+                item_dict['_value'] = price.value
+                item_dict['_value_name'] = price.value_name
 
         item_dict['stash_id'] = stash_dict['id']
         item_dict.pop("descrText", None)
