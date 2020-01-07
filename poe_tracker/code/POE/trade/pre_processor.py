@@ -3,7 +3,7 @@ import pymongo
 import time
 import asyncio
 
-from . import price
+from .price import Price
 from .. import mongo
 from ...Log import Log
 from .change_id import ChangeID
@@ -84,6 +84,10 @@ class PreProcessor:
             if not stash_dict['stash'].startswith("~"):
                 return None
             item_dict['note'] = stash_dict['stash']
+
+        price = Price(item_dict['note'])
+        item_dict['_value'] = price.value
+        item_dict['_value_name'] = price.value_name
 
         item_dict['stash_id'] = stash_dict['id']
         item_dict.pop("descrText", None)
