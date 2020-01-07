@@ -36,7 +36,7 @@ class Accounts_Loop:
         while 1:
             # Check if we even need to follow characters
             if not self.config[self.args.env]['characters']['track']:
-                self.log.warning("Config was set to not track characters. Aborting poe_loop.")
+                self.log.warning("Config was set to not track characters. Aborting accounts_loop.")
                 break
             
             while time.time() < self.next_update:
