@@ -82,31 +82,34 @@ class Trade_Loop:
 
 
     async def ingest_to_db(self):
-        pre_proc = pre_processor.PreProcessor()
         last_poe_ninja_update = time.time()
         
         self.log.info("Begin ingesting items/stashes into DB")
 
         while 1:
+            await asyncio.sleep(0)
             # This item will wait until something enters the queue
             api_dict = await self.api_queue.get()
 
-            await pre_proc.process_api(api_dict)
+            pre_proc = pre_processor.PreProcessor(api_dict)
+            await pre_proc.process_api()
 
             # Generate a new 
-            last_good_change_id = ChangeID(api_dict['next_change_id'])
 
             # Log every minute
             if time.time() - last_poe_ninja_update > 60:
+                last_good_change_id = ChangeID(api_dict['next_change_id'])
+
                 poe_ninja_change_id = ChangeID()
                 await poe_ninja_change_id.async_poe_ninja()
+                
                 self.log.info(f"ChangeID delta: {poe_ninja_change_id-last_good_change_id}")
                 last_poe_ninja_update = time.time()
+                
                 self.log.info(f"ChangeID: {last_good_change_id}")
 
 
     async def queue_up_stashes(self):
-
         self.log.info("Begin queue_up_stashes")
 
         cache = await self.db.cache.find_one({"name":"trade"})
@@ -118,6 +121,7 @@ class Trade_Loop:
         # api.sync_poe_ninja()
 
         async for data in api.iter_data():
+            await asyncio.sleep(0)
             await self.api_queue.put(data)
             # Allow other tasks to run
             await asyncio.sleep((self.api_queue.qsize()/10)**2)
@@ -131,6 +135,7 @@ class Trade_Loop:
         next_scub = datetime.datetime.now()
         
         while 1:
+            await asyncio.sleep(0)
             if datetime.datetime.now() < next_scub:
                 dt = next_scub - datetime.datetime.now()
                 dt = dt.total_seconds()

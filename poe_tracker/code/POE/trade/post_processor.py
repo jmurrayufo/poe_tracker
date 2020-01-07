@@ -75,11 +75,12 @@ class PostProcessor:
         if (datetime.datetime.utcnow() - updated_pointer) < datetime.timedelta(minutes=30):
             return
         start_update = time.time()
+        self.log.info("Begin cleaning process")
 
         element = 0
         sold = 0
         t1 = time.time()
-        async for stash in self.db.stashes.find({"_updatedAt": {"$gt": updated_pointer}}, sort=[('_updatedAt', 1)]):
+        async for stash in self.db.stashes.find({"_updatedAt": {"$gte": updated_pointer}}, sort=[('_updatedAt', 1)]):
             await asyncio.sleep(0)
             
             updated_pointer = stash['_updatedAt']
@@ -120,6 +121,9 @@ class PostProcessor:
                 )
 
             element += len(stash['items'])
+
+        # Step back one second to better cover next cleaning operation
+        # updated_pointer -= datetime.timedelta(seconds=1)
 
         await self.db.cache.update_one({"name":"trade"},{"$set":{"filter_updated_pointer":updated_pointer}})
         self.log.info(f"Cleaning {element/(time.time()-t1):,.0f} stashes/s. Found {sold:,d}/{element:,d} missing items. Currently {datetime.datetime.utcnow() - updated_pointer} behind")

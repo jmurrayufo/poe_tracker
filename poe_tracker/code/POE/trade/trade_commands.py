@@ -1,15 +1,16 @@
 
 from . import price
 from .. import mongo
-from ...Log import Log
 from ...args import Args
+from ...Log import Log
 from fuzzywuzzy import fuzz 
 from pymongo import ReturnDocument
+import asyncio
 import datetime
+import discord
+import io
 import numpy as np
 import re
-import io
-import discord
 
 class TradeCommands:
 
@@ -45,7 +46,10 @@ class TradeCommands:
                 if item_dict['typeLine'] == "Chaos Orb":
                     value += item_dict['stackSize']
                     continue
-                data = await self._estimate(item_dict['typeLine'])
+                data = await self._estimate(item_dict['typeLine'], percentile=20)
+                if data is None:
+                    await args.message.channel.send(f"I cannot price out {item_dict['typeLine']}, not enough data...")
+                    continue
                 value += data['estimate'] * item_dict['stackSize']
                 print(f"{item_dict['typeLine']:>30} {item_dict['stackSize']:5} {data['estimate']:6.2f} {item_dict['stackSize']*data['estimate']:8.2f}  {value:8.2f}")
         await args.message.channel.send(f"Estimated total value of {value:,.0f}C")
@@ -134,13 +138,26 @@ class TradeCommands:
         values = []
         async for item_dict in self.db.items.currency.find(
                 {
-                    "typeLine":typeLine,
+                    "typeLine": typeLine,
                     "league":"Metamorph",
-                    "_value_name" : "chaos",
+                    "_value_name" : "Chaos Orb",
                     "_value": {"$ne":None},
                 }
         ):
             values.append(item_dict['_value'])
+
+        # Find Inverse values as well
+        async for item_dict in self.db.items.currency.find(
+                {
+                    "typeLine": "Chaos Orb",
+                    "league":"Metamorph",
+                    "_value_name" : typeLine,
+                    "_value": {"$ne":None},
+                }
+        ):
+            # self.log.info(item_dict)
+            # await asyncio.sleep(1)
+            values.append(1/item_dict['_value'])
 
         if len(values) == 0:
             return None
@@ -156,6 +173,7 @@ class TradeCommands:
         data['min'] = np.amin(values)
         data['max'] = np.amax(values)
         data['estimate'] = np.percentile(values, percentile)
+        data['count'] = len(values)
         return data
         
 

@@ -7,21 +7,24 @@ from .price import Price
 from .. import mongo
 from ...Log import Log
 from .change_id import ChangeID
+from collections import defaultdict
 
 class PreProcessor:
 
     
-    def __init__(self):
-        self.mongo = mongo.Mongo()
+    def __init__(self, api_dict):
+        self.db = mongo.Mongo().db
         self.log = Log()
+        self.api_dict = api_dict
+        self.update_dict = defaultdict(lambda: [])
 
 
-    async def process_api(self, api_dict):
+    async def process_api(self):
         """Given a full api raw dict, process it into the mongo db
         """
-
+        # t1 = time.time()
         # Process and queue up items for writes
-        for stash in api_dict['stashes']:
+        for stash in self.api_dict['stashes']:
             await asyncio.sleep(0) # Be nice!
             await self.process_stash(stash)
 
@@ -33,19 +36,30 @@ class PreProcessor:
             },
             {'$set': 
                 {
-                    'current_next_id': api_dict['next_change_id'],
+                    'current_next_id': self.api_dict['next_change_id'],
                     'change_id_last_update': now,
                 }
             }
         )
-        await self.mongo.bulk_write(op, "cache")
-        await ChangeID(api_dict['next_change_id']).post_to_influx()
+        self.update_dict['cache'].append(op)
+
+        # TODO: This could really be a call to Mongo()
+        # total_ops = 0
+        for collection_name in self.update_dict:
+                col = self.db.get_collection(name=collection_name)
+                await col.bulk_write(
+                        self.update_dict[collection_name], 
+                        ordered=False
+                )
+                # total_ops += len(self.update_dict[collection_name])
+        # self.log.info(f"{total_ops/(time.time()-t1)}")
+
+        await ChangeID(self.api_dict['next_change_id']).post_to_influx()
 
 
     async def process_stash(self, stash_dict):
         """Given a raw stash from the API, process it fully into the DB
         """
-
         # XXX Newly emptied stashes break here... Should we take the time to check them?
         if len(stash_dict['items']) == 0:
             return
@@ -53,6 +67,7 @@ class PreProcessor:
         # Loop through items and build list of `id`s.
         new_ids = []
         for item_dict in stash_dict['items']:
+            await asyncio.sleep(0) # Be nice!
             _id = await self.process_item(item_dict, stash_dict)
             if _id is None:
                 continue
@@ -70,7 +85,8 @@ class PreProcessor:
                 },
                 upsert=True
         )
-        await self.mongo.bulk_write(op, "stashes")
+        self.update_dict['stashes'].append(op)
+        # await self.mongo.bulk_write(op, "stashes")
 
 
     async def process_item(self, item_dict, stash_dict):
@@ -86,10 +102,19 @@ class PreProcessor:
 
         if 'note' in item_dict:
             # Parse out price, save if good
-            price = Price(item_dict['note'])
-            if price.parse():
-                item_dict['_value'] = price.value
-                item_dict['_value_name'] = price.value_name
+            price = Price(
+                    item_dict['note'], 
+                    item_dict.get('stackSize', 1)
+            )
+            try:
+                if price.parse():
+                    item_dict['_value'] = price.value
+                    item_dict['_value_name'] = price.value_name
+            except TypeError:
+                self.log.exception("Type error when parsing item")
+                self.log.error(item_dict)
+                self.log.error("Check the above for bad `stackSize` field?")
+                return None
 
         item_dict['stash_id'] = stash_dict['id']
         item_dict.pop("descrText", None)
@@ -112,8 +137,7 @@ class PreProcessor:
                 },
                 upsert=True
         )
-
-        await self.mongo.bulk_write(op, "items")
+        self.update_dict['items'].append(op)
 
         if item_dict['extended']['category'] == 'currency':
             await self.process_currency(item_dict)
@@ -145,5 +169,4 @@ class PreProcessor:
                 },
                 upsert=True
         )
-
-        await self.mongo.bulk_write(op, "items.currency")
+        self.update_dict['items.currency'].append(op)

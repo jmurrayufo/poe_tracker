@@ -8,7 +8,7 @@ class Price:
     Given a note, return an estimated price of an item in terms of chaos orbs
     """
 
-    price_re = re.compile(r"~(b\/o|price) *([\d\.\/,]+)? *([\w\- ']+)")
+    price_re = re.compile(r"~(b\/o|price) *([\d\.\/]+) *([\w\- ']+)")
     valid_currencies = [
         "alch",
         "alt",
@@ -43,11 +43,38 @@ class Price:
         "mirror":"mir",
     }
 
+    item_remapping = {
+        "alch":"Orb of Alchemy",
+        "alt":"Orb of Alteration",
+        "blessed":"Blessed Orb",
+        "cartographer":"Cartographer's Chisel",
+        "chance":"Orb of Chance",
+        "chaos":"Chaos Orb",
+        "chisel":"Cartographer's Chisel",
+        "chrom":"Chromatic Orb",
+        "divine":"Divine Orb",
+        "exa":"Exalted Orb",
+        "exalted" :"Exalted Orb",
+        "fuse":"Orb of Fusing",
+        "fusing":"Orb of Fusing",
+        "gcp":"Gemcutter's Prism",
+        "gemcutter":"Gemcutter's Prism",
+        "jewel":"Jeweller's Orb",
+        "mir":"Mirror of Kalandra",
+        "mirror":"Mirror of Kalandra",
+        "perandus":"Perandus Coin",
+        "regal":"Regal Orb",
+        "regret":"Orb of Regret",
+        "scour":"Orb of Scouring",
+        "silver":"Silver Coin",
+    }
 
-    def __init__(self, note=None):
+
+    def __init__(self, note=None, stack_size = 1):
         self.note = note
         self.value = 0
         self.value_name = "UNKNOWN"
+        self.stack_size = stack_size
         self.log = Log()
 
     def __str__(self):
@@ -72,7 +99,13 @@ class Price:
 
         try:
             self.value = eval(match_obj.group(2)) if match_obj.group(2) is not None else 1
+            self.value /= self.stack_size
         except (SyntaxError, ZeroDivisionError):
+            return False
+        except TypeError:
+            self.log.exception("Exception in parsing price value")
+            self.log.error(f"Value was {self.value}")
+            self.log.error(f"Stack Size {self.stack_size}")
             return False
 
         if type(self.value) not in [float,int]:
@@ -87,6 +120,9 @@ class Price:
         
         if self.value_name in self.currency_remapping:
             self.value_name = self.currency_remapping[self.value_name]
+
+        if self.value_name in self.item_remapping:
+            self.value_name = self.item_remapping[self.value_name]
 
         return True
 
