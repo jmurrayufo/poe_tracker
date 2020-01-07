@@ -85,9 +85,11 @@ class PreProcessor:
                 return None
             item_dict['note'] = stash_dict['stash']
 
+        # Parse out price, save if good
         price = Price(item_dict['note'])
-        item_dict['_value'] = price.value
-        item_dict['_value_name'] = price.value_name
+        if price.parse():
+            item_dict['_value'] = price.value
+            item_dict['_value_name'] = price.value_name
 
         item_dict['stash_id'] = stash_dict['id']
         item_dict.pop("descrText", None)
