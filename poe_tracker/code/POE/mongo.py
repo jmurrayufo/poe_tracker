@@ -290,6 +290,7 @@ class Mongo(metaclass=Singleton):
                 self.bulk_write_queues[queue_name].append(op)
         if self.bulk_write_task is None:
             self.bulk_write_task = asyncio.create_task(self.write_worker())
+            await asyncio.sleep(0)
 
 
     async def write_worker(self):
@@ -297,7 +298,7 @@ class Mongo(metaclass=Singleton):
         """
         # Queue up writes for 15 seconds, then burst to server.
         # TODO: Make config value
-        await asyncio.sleep(1)
+        await asyncio.sleep(15)
 
         for queue in self.bulk_write_queues:
             if len(self.bulk_write_queues[queue]):
