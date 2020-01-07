@@ -8,7 +8,7 @@ class Price:
     Given a note, return an estimated price of an item in terms of chaos orbs
     """
 
-    price_re = re.compile(r"^~(b\/o|price) *([\d\.\/,]+)? *([\w\- ']+)$")
+    price_re = re.compile(r"~(b\/o|price) *([\d\.\/,]+)? *([\w\- ']+)")
     valid_currencies = [
         "chrom",
         "alt",
@@ -45,7 +45,7 @@ class Price:
     }
 
 
-    def __init__(self, note):
+    def __init__(self, note=None):
         self.note = note
         self.value = 0
         self.value_name = "UNKNOWN"
