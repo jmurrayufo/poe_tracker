@@ -11,6 +11,7 @@ import discord
 import io
 import numpy as np
 import re
+import time
 
 class TradeCommands:
 
@@ -34,10 +35,10 @@ class TradeCommands:
                     "accountName": args.account,
                 }
         ):
-            await args.message.channel.send(f"Found one!")
             stashes.append(stash_dict)
-        await args.message.channel.send(f"Found them all, will now prase items.")
+        delay_message = await args.message.channel.send(f"<@{args.message.author.id}>, this might take me a moment...")
         value = 0.0
+        t1 = time.time()
         for stash_dict in stashes:
             for item_id in stash_dict['items']:
                 item_dict = await self.db.items.find_one({"id":item_id})
@@ -45,15 +46,18 @@ class TradeCommands:
                     continue
                 if item_dict['typeLine'] == "Chaos Orb":
                     value += item_dict['stackSize']
-                    continue
-                data = await self._estimate(item_dict['typeLine'], percentile=20)
-                if data is None:
-                    await args.message.channel.send(f"I cannot price out {item_dict['typeLine']}, not enough data...")
-                    continue
-                value += data['estimate'] * item_dict['stackSize']
-                print(f"{item_dict['typeLine']:>30} {item_dict['stackSize']:5} {data['estimate']:6.2f} {item_dict['stackSize']*data['estimate']:8.2f}  {value:8.2f}")
+                    data = {'estimate': 1}
+                else:
+                    data = await self._estimate(item_dict['typeLine'], percentile=20)
+                    if data is None:
+                        await args.message.channel.send(f"I cannot price out {item_dict['typeLine']}, not enough data...")
+                        continue
+                stackSize = item_dict.get('stackSize', 1)
+                value += data['estimate'] * stackSize
+                print(f"{item_dict['typeLine']:>30} {stackSize:5} {data['estimate']:6.2f} {stackSize*data['estimate']:8.2f}  {value:8.2f}")
+        await delay_message.delete()
         await args.message.channel.send(f"Estimated total value of {value:,.0f}C")
-
+        self.log.info(f"Took {time.time()-t1} to process a test command")
 
     async def currency(self, args):
         import matplotlib
@@ -152,7 +156,8 @@ class TradeCommands:
                     "typeLine": "Chaos Orb",
                     "league":"Metamorph",
                     "_value_name" : typeLine,
-                    "_value": {"$ne":None},
+                    "_value": {"$exists":1},
+                    "_value": {"$ne": 0}
                 }
         ):
             # self.log.info(item_dict)

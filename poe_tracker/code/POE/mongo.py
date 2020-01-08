@@ -163,7 +163,6 @@ class Mongo(metaclass=Singleton):
                     name="stash_id",
             )
 
-
             # db.items.currency
             self.log.info("Setup db.items.currency")
             self.log.info("Create 'id' index")
@@ -178,7 +177,30 @@ class Mongo(metaclass=Singleton):
                     name="updatedAt",
                     expireAfterSeconds=1*6*60*60
             )
+            self.log.info("Create 'league' index")
+            await self.db.items.currency.create_index(
+                    [('league', 1)],
+                    name="league",
+            )
+            self.log.info("Create '_value_name' index")
+            await self.db.items.currency.create_index(
+                    [('_value_name', 1)],
+                    name="_value_name",
+            )
+            self.log.info("Create '_value' index")
+            await self.db.items.currency.create_index(
+                    [('_value', 1)],
+                    name="_value",
+            )
 
+            # db.items.currency.cached
+            self.log.info("Setup db.items.currency.cached")
+            self.log.info("Create 'typeLine' index")
+            await self.db.items.currency.cached.create_index(
+                    [('typeLine', 1)],
+                    name="typeLine",
+                    unique=True,
+            )
 
             # db.items.mods
             self.log.info("Setup db.items.mods")
@@ -250,7 +272,7 @@ class Mongo(metaclass=Singleton):
                     name="accountName",
             )
 
-            # db.items.currency
+            # db.characters.xp
             self.log.info("Setup db.characters.xp")
             self.log.info("Create 'date_name' index")
             await self.db.characters.xp.create_index(
@@ -258,6 +280,7 @@ class Mongo(metaclass=Singleton):
                     name="date_name",
                     unique=True,
             )
+
         finally:
             boot_task.cancel()
 
