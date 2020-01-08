@@ -48,8 +48,13 @@ class TradeCommands:
                 item_dict = await self.db.items.find_one({"id":item_id})
                 if item_dict is None:
                     continue
+
+                # LIMITED CATEGORIES
+
+                if item_dict['extended']['category'] not in ['currency', 'cards']:
+                    continue
                 
-                value = await e.price_out(item_dict['typeLine'])
+                value = await e.price_out(item_dict['typeLine'], item_dict['extended']['category'])
                 
                 if value is None:
                     continue
