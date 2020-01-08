@@ -54,6 +54,10 @@ class TradeAPI(metaclass=Singleton):
             return False
         # self.log.info(self.gen_change_id())
         # print(r.headers)
+        if r.status_code != 200:
+            self.log.error(f"Got error code of {r.status_code}")
+            self.log.error(r)
+            return False
         try:
             self.log.debug(r.headers['X-Rate-Limit-Ip'])
             self.log.debug(r.headers['X-Rate-Limit-Ip-State'])
@@ -99,6 +103,7 @@ class TradeAPI(metaclass=Singleton):
                 continue
             self.set_next_change_id()
             yield self.data
+
 
     def set_next_change_id(self, new_change_id=None):
         if new_change_id:

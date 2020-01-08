@@ -94,6 +94,11 @@ class Plotter:
         self.log.info("Write plots to buffer")
         buf = io.BytesIO()
         plt.savefig(buf, format='png', bbox_inches='tight',dpi=100)
+        
+        plt.clf()
+        plt.cla()
+        plt.close()
+        
         buf.seek(0)
         f = discord.File(buf, filename="chart.png")
 

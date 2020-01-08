@@ -140,8 +140,8 @@ class Accounts_Commands:
 
         # If we didn't get any names, maybe we were just asked to filter a league?
         if args.league is not None:
-            chars = await self.db.characters.find({"league":re.compile(args.league)})
-            chars = chars.to_list()
+            chars = self.db.characters.find({"league":re.compile(args.league)})
+            chars = await chars.to_list(None)
             for char in chars:
                 if char['name'] not in characters:
                     characters.append(char['name'])

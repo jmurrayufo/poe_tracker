@@ -19,6 +19,8 @@ humanize = "*"
 httpx = "*"
 motor = "*"
 sdnotify = "*"
+fuzzywuzzy = "*"
+python-levenshtein = "*"
 
 [requires]
 python_version = "3.7"

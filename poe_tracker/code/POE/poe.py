@@ -10,7 +10,7 @@ from ..Client import Client
 from ..CommandProcessor import DiscordArgumentParser, ValidUserAction
 from ..CommandProcessor.exceptions import NoValidCommands, HelpNeeded
 from ..Log import Log
-from .trade import trade_loop, post_process_loop
+from .trade import trade_loop, cleanup_loop, trade_commands
 from .accounts import accounts_loop, accounts_commands
 from ..watchdog import watchdog
 
@@ -23,6 +23,7 @@ class POE:
         self.mongo = mongo.Mongo()
         self.args = Args()
         self.accounts_commands = accounts_commands.Accounts_Commands()
+        self.trade_commands = trade_commands.TradeCommands()
 
 
     async def on_message(self, message):
@@ -51,13 +52,21 @@ class POE:
         self.trade_loop = trade_loop.Trade_Loop(self.args)
         asyncio.create_task(self.trade_loop.loop())
 
-        self.post_process_loop = post_process_loop.Post_Process_Loop()
-        asyncio.create_task(self.post_process_loop.loop())
+        # self.cleanup_loop = cleanup_loop.CleanupLoop()
+        # asyncio.create_task(self.cleanup_loop.loop())
 
         self.watchdog_loop = watchdog.Watchdog()
         asyncio.create_task(self.watchdog_loop.loop())
 
         self.log.info("POE, ready to recieve commands!")
+        r = await self.client.change_presence(
+                activity=discord.Activity(
+                        id=0,
+                        name="POE Trade API", 
+                        type=discord.ActivityType.watching,
+                )
+        )
+        self.log.info(r)
         self.ready = True
 
 
@@ -75,6 +84,37 @@ class POE:
         
         parser.set_defaults(message=message)
         sp = parser.add_subparsers()
+
+        # Test things
+        sub_parser = sp.add_parser('test',
+            description='Estimate current currency values',
+        )
+        sub_parser.add_argument(
+            "account",
+            help="Name of account to check against",
+        )
+        sub_parser.add_argument(
+            "tab_name",
+            help="Name of stash to price check",
+        )
+        sub_parser.set_defaults(cmd=self.trade_commands.test)
+
+
+        # Show currency valuations
+        sub_parser = sp.add_parser('currency',
+            description='Estimate current currency values',
+        )
+        sub_parser.add_argument(
+            "currency",
+            help="Currency to price",
+            nargs='+',
+        )
+        sub_parser.add_argument(
+            "--plot",
+            action='store_true',
+            help="Provide usefull plots",
+        )
+        sub_parser.set_defaults(cmd=self.trade_commands.currency)
 
         # Register new users
         sub_parser = sp.add_parser('register',
@@ -111,12 +151,6 @@ class POE:
             type=int,
         )
         sub_parser.set_defaults(cmd=self.accounts_commands.leaderboard)
-
-        # Test various things
-        sub_parser = sp.add_parser('test',
-            description='Debug command (please ignore)',
-            help='Break shit')
-        sub_parser.set_defaults(cmd=self.accounts_commands.test)
 
         # List off characters
         sub_parser = sp.add_parser('list',
@@ -187,9 +221,8 @@ class POE:
                 return
         except NoValidCommands as e:
             # We didn't get a subcommand, let someone else deal with this mess!
+            await message.channel.send(str(e))
             self.log.error(e)
-            self.log.error("???")
-            pass
         except HelpNeeded as e:
             self.log.info("TypeError Return")
             self.log.info(e)
