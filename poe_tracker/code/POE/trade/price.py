@@ -99,7 +99,6 @@ class Price:
 
         try:
             self.value = eval(match_obj.group(2)) if match_obj.group(2) is not None else 1
-            self.value /= self.stack_size
         except (SyntaxError, ZeroDivisionError):
             return False
         except TypeError:

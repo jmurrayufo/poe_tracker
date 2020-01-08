@@ -121,6 +121,7 @@ class PreProcessor:
         item_dict.pop("flavourText", None)
         item_dict.pop("icon", None)
         item_dict.pop("socketedItems", None)
+        # category = item_dict['e']
 
         if 'id' not in item_dict:
             return None
@@ -140,7 +141,8 @@ class PreProcessor:
         self.update_dict['items'].append(op)
 
         if item_dict['extended']['category'] == 'currency':
-            await self.process_currency(item_dict)
+            # await self.process_currency(item_dict)
+            pass
 
         return item_dict['id']
 

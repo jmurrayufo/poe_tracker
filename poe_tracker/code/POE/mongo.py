@@ -162,49 +162,71 @@ class Mongo(metaclass=Singleton):
                     [('stash_id', 1)],
                     name="stash_id",
             )
+            self.log.info("Create '_value_name' index")
+            await self.db.items.create_index(
+                    [('_value_name', 1)],
+                    name="_value_name",
+                    sparse=True
+            )
+            self.log.info("Create '_value' index")
+            await self.db.items.create_index(
+                    [('_value', 1)],
+                    name="_value",
+                    sparse=True
+            )
 
             # db.items.currency
-            self.log.info("Setup db.items.currency")
-            self.log.info("Create 'id' index")
-            await self.db.items.currency.create_index(
-                    [('id', 1)],
-                    name="id",
-                    unique=True,
-            )
+            # self.log.info("Setup db.items.currency")
+            # self.log.info("Create 'id' index")
+            # await self.db.items.currency.create_index(
+            #         [('id', 1)],
+            #         name="id",
+            #         unique=True,
+            # )
+            # self.log.info("Create 'typeLine' index")
+            # await self.db.items.currency.create_index(
+            #         [('typeLine', 1)],
+            #         name="typeLine",
+            # )
+            # self.log.info("Create 'updatedAt' index")
+            # await self.db.items.currency.create_index(
+            #         [('_updatedAt', 1)],
+            #         name="updatedAt",
+            #         expireAfterSeconds=1*6*60*60
+            # )
+            # self.log.info("Create 'league' index")
+            # await self.db.items.currency.create_index(
+            #         [('league', 1)],
+            #         name="league",
+            # )
+            # self.log.info("Create '_value_name' index")
+            # await self.db.items.currency.create_index(
+            #         [('_value_name', 1)],
+            #         name="_value_name",
+            # )
+            # self.log.info("Create '_value' index")
+            # await self.db.items.currency.create_index(
+            #         [('_value', 1)],
+            #         name="_value",
+            # )
+
+            # db.items.price.cache
+            self.log.info("Setup db.items.price.cache")
             self.log.info("Create 'typeLine' index")
-            await self.db.items.currency.create_index(
+            await self.db.items.price.cache.create_index(
                     [('typeLine', 1)],
                     name="typeLine",
-            )
-            self.log.info("Create 'updatedAt' index")
-            await self.db.items.currency.create_index(
-                    [('_updatedAt', 1)],
-                    name="updatedAt",
-                    expireAfterSeconds=1*6*60*60
-            )
-            self.log.info("Create 'league' index")
-            await self.db.items.currency.create_index(
-                    [('league', 1)],
-                    name="league",
+                    unique=True,
             )
             self.log.info("Create '_value_name' index")
-            await self.db.items.currency.create_index(
+            await self.db.items.price.cache.create_index(
                     [('_value_name', 1)],
                     name="_value_name",
             )
             self.log.info("Create '_value' index")
-            await self.db.items.currency.create_index(
+            await self.db.items.price.cache.create_index(
                     [('_value', 1)],
                     name="_value",
-            )
-
-            # db.items.currency.cache
-            self.log.info("Setup db.items.currency.cache")
-            self.log.info("Create 'typeLine' index")
-            await self.db.items.currency.cache.create_index(
-                    [('typeLine', 1)],
-                    name="typeLine",
-                    unique=True,
             )
 
             # db.items.mods
