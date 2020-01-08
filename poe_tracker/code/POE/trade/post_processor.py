@@ -99,8 +99,8 @@ class PostProcessor:
 
             results = await results.to_list(None)
             for sold_item in results:
-                # Add to sold items
-                if "note" in sold_item:
+                # Add to sold items. Check to make sure we got a value (data is useless without it!)
+                if "_value" in sold_item:
                     sold_item.pop("_id", None)
                     sold_item.pop("_updatedAt", None)
                     sold_item.pop("_createdAt", None)
