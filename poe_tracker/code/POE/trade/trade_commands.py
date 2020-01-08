@@ -25,6 +25,10 @@ class TradeCommands:
     async def test(self, args):
         """account, tab_name
         """
+        from .estimator import Estimator
+
+        e = Estimator()
+
         self.log.info(f"Ran test with {args}")
         await args.message.channel.send(f"Begining search for stash tab `{args.tab_name}`")
         stashes = []
@@ -37,26 +41,24 @@ class TradeCommands:
         ):
             stashes.append(stash_dict)
         delay_message = await args.message.channel.send(f"<@{args.message.author.id}>, this might take me a moment...")
-        value = 0.0
+        total_value = 0.0
         t1 = time.time()
         for stash_dict in stashes:
             for item_id in stash_dict['items']:
                 item_dict = await self.db.items.find_one({"id":item_id})
                 if item_dict is None:
                     continue
-                if item_dict['typeLine'] == "Chaos Orb":
-                    value += item_dict['stackSize']
-                    data = {'estimate': 1}
-                else:
-                    data = await self._estimate(item_dict['typeLine'], percentile=20)
-                    if data is None:
-                        await args.message.channel.send(f"I cannot price out {item_dict['typeLine']}, not enough data...")
-                        continue
+                
+                value = await e.price_out(item_dict['typeLine'])
+                
+                if value is None:
+                    continue
+                
                 stackSize = item_dict.get('stackSize', 1)
-                value += data['estimate'] * stackSize
-                print(f"{item_dict['typeLine']:>30} {stackSize:5} {data['estimate']:6.2f} {stackSize*data['estimate']:8.2f}  {value:8.2f}")
+                total_value += value * stackSize
+                print(f"{item_dict['typeLine']:>30} {stackSize:5} {value:6.2f} {stackSize*value:8.2f}  {total_value:8.2f}")
         await delay_message.delete()
-        await args.message.channel.send(f"Estimated total value of {value:,.0f}C")
+        await args.message.channel.send(f"Estimated total value of {total_value:,.0f}C")
         self.log.info(f"Took {time.time()-t1} to process a test command")
 
     async def currency(self, args):

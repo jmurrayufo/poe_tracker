@@ -152,7 +152,7 @@ class PreProcessor:
         item_dict.pop("identified", None)
         item_dict.pop("inventoryId", None)
         item_dict.pop("properties", None)
-        item_dict.pop("extended", None)
+        # item_dict.pop("extended", None)
         item_dict.pop("prophecyText", None)
         item_dict.pop("explicitMods", None)
 

@@ -171,6 +171,11 @@ class Mongo(metaclass=Singleton):
                     name="id",
                     unique=True,
             )
+            self.log.info("Create 'typeLine' index")
+            await self.db.items.currency.create_index(
+                    [('typeLine', 1)],
+                    name="typeLine",
+            )
             self.log.info("Create 'updatedAt' index")
             await self.db.items.currency.create_index(
                     [('_updatedAt', 1)],
@@ -193,10 +198,10 @@ class Mongo(metaclass=Singleton):
                     name="_value",
             )
 
-            # db.items.currency.cached
-            self.log.info("Setup db.items.currency.cached")
+            # db.items.currency.cache
+            self.log.info("Setup db.items.currency.cache")
             self.log.info("Create 'typeLine' index")
-            await self.db.items.currency.cached.create_index(
+            await self.db.items.currency.cache.create_index(
                     [('typeLine', 1)],
                     name="typeLine",
                     unique=True,
