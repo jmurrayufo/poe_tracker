@@ -103,7 +103,7 @@ class Estimator:
         # If our value is 5% or more off, shrink by 10%
         if old_value is not None:
             if abs(1-value/old_value) > 0.05:
-                self.log.warning(f"Caught bad cache on {typeLine}, updateing value")
+                # self.log.warning(f"Caught bad cache on {typeLine}, updateing value")
                 await self.db.items.price.cache.find_one_and_update(
                     {"typeLine": typeLine, "extended.category": category},
                     {"$mul": {"_cache_factor": 0.90}}
@@ -133,7 +133,7 @@ class Estimator:
             await asyncio.sleep(0)
 
         # Find Inverse values as well
-        if 0 and category == "currency":
+        if category == "currency":
             async for item_dict in self.db.items.find(
                     {
                         "typeLine": "Chaos Orb",
