@@ -153,7 +153,7 @@ class Accounts_Loop:
                     },
                     "$inc":
                     {
-                        "stats.total_experince": gained_xp,
+                        "stats.total_experience": gained_xp,
                         "stats.lost_expereince": lost_xp,
                         "stats.deaths": deaths,
                         "stats.playtime": playtime,
@@ -167,8 +167,8 @@ class Accounts_Loop:
                 {
                     "$inc":
                     {
-                        "stats.total_experince": gained_xp,
-                        "stats.lost_expereince": lost_xp,
+                        "stats.total_experience": gained_xp,
+                        "stats.lost_experience": lost_xp,
                         "stats.deaths": deaths,
                         "stats.playtime": playtime,
                     }
