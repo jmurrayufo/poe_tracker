@@ -125,6 +125,12 @@ class Mongo(metaclass=Singleton):
                     [('extended.category', 1)],
                     name="category",
             )
+            self.log.info("Create 'subcategories' index")
+            await self.db.items.create_index(
+                    [('extended.subcategories', 1)],
+                    name="subcategories",
+                    sparse=True,
+            )
             self.log.info("Create 'id' index")
             await self.db.items.create_index(
                     [('id', 1)],
@@ -261,11 +267,11 @@ class Mongo(metaclass=Singleton):
                     unique=True,
             )
             self.log.info("Create 'updatedAt' index")
-            # await self.db.items.create_index(
-            #         [('_updatedAt', 1)],
-            #         name="updatedAt",
-            #         expireAfterSeconds=3*24*60*60
-            # )
+            await self.db.items.sold.create_index(
+                    [('_updatedAt', 1)],
+                    name="_updatedAt",
+                    expireAfterSeconds=7*24*60*60
+            )
 
 
             # db.stashes
