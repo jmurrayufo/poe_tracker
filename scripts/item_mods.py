@@ -7,39 +7,41 @@ import datetime
 import os
 import re
 
-client = pymongo.MongoClient('atlas.lan:27017', username='poe', password='poe', authSource='path_of_exile')
-db = client.path_of_exile
+client = pymongo.MongoClient('atlas.lan:27017', username='poe', password='poe', authSource='admin')
+db = client.path_of_exile_dev
 
-re_pat = re.compile(r"\d+(?:.\d+)?")
+re_pat = re.compile(r"-?\d+(?:.\d+)?")
 
-def parse_mod(mod, _type, frameType):
+def insert_mod(mod, _type, frameType):
     (mod, numbers) = re_pat.subn("X",mod)
-    if db.mod_lookup.find({"name":mod, "type":_type,"frameType":frameType}, limit=1):
-        return
-    next_id = db.index_markers.find_one_and_update(
-        {"type":_type+"Mods", "frameType":frameType},
-        {"$inc": {"next_id":max(1,numbers)}}
-        )['next_id']
 
-    try:
-        result = db.mod_lookup.insert_one(
-            {"name":mod, 
-             "id":next_id, 
-             "type":_type,
-             "numbers":numbers,
-             "frameType":frameType}
-            )
-    except pymongo.errors.DuplicateKeyError:
-        return
+    result = db.items.mods.find_one_and_update(
+            {
+                "name":mod,
+                "type":_type,
+            },
+            {
+                "$setOnInsert": {
+                    "name":mod, 
+                    "type":_type,
+                    "numbers":numbers,
+                }
+            },
+            upsert=True,
+    )
+    return
 
 t0 = time.time()
 i = 0
-for item in db.items.find({},sort=[("_updatedAt",1)]):
-    print(datetime.datetime.now(),f"{i:,d}", datetime.datetime.utcnow() - item['_updatedAt'])
+last_update = time.time()
+for item in db.items.find({},sort=[("_updatedAt",-1)]):
+    if time.time() - last_update > 1:
+        print(datetime.datetime.now(),f" {i:,d} ", datetime.datetime.utcnow() - item['_updatedAt'])
+        last_update = time.time()
     i += 1
     if "explicitMods" in item:
         for mod in item['explicitMods']:
-            parse_mod(mod, "explicit", item['frameType'])
+            insert_mod(mod, "explicit", item['frameType'])
     if "implicitMods" in item:
         for mod in item['implicitMods']:
-            parse_mod(mod, "implicit", item['frameType'])
+            insert_mod(mod, "implicit", item['frameType'])
