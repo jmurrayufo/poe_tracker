@@ -101,7 +101,7 @@ class Price:
             self.value = eval(match_obj.group(2)) if match_obj.group(2) is not None else 1
             # Prevent > 64 bit numbers from being parsed if someone gives us a really stupid field
             if self.value > 2**63:
-                self.log.error(f"Saw value of {self.value} and corrected it to {2**63}. Note was {note}")
+                self.log.error(f"Saw value of {self.value} and corrected it to {2**63}. Note was {self.note}")
                 self.value = 2**63
         except (SyntaxError, ZeroDivisionError):
             return False
