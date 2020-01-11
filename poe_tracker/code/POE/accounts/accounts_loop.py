@@ -222,7 +222,8 @@ class Accounts_Loop:
         host = self.influxDB_host + '/write'
         params = {"db":"poe","precision":"m"}
         try:
-            r = await httpx.post( host, params=params, data=data, timeout=1)
+            async with httpx.AsyncClient() as client:
+                r = await client.post( host, params=params, data=data, timeout=1)
             r.raise_for_status()
             pass
             # print(data)

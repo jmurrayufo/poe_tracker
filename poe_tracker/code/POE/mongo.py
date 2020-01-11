@@ -233,6 +233,16 @@ class Mongo(metaclass=Singleton):
                     name="_updatedAt",
                     expireAfterSeconds=7*24*60*60
             )
+            self.log.info("db.items.sold: Create '_value_name' index")
+            await self.db.items.sold.create_index(
+                    [('_value_name', 1)],
+                    name="_value_name",
+            )
+            self.log.info("db.items.sold: Create '_value' index")
+            await self.db.items.sold.create_index(
+                    [('_value', 1)],
+                    name="_value",
+            )
 
             # db.stashes
             self.log.info("Setup db.stashes")
