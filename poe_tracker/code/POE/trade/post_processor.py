@@ -73,7 +73,7 @@ class PostProcessor:
 
         # self.log.info(f"Currently {datetime.datetime.utcnow() - updated_pointer} behind")
 
-        if (datetime.datetime.utcnow() - updated_pointer) < datetime.timedelta(minutes=5):
+        if (datetime.datetime.utcnow() - updated_pointer) < datetime.timedelta(minutes=120):
             return
         start_update = time.time()
         self.log.info("Begin cleaning process")
@@ -86,7 +86,7 @@ class PostProcessor:
             
             updated_pointer = stash['_updatedAt']
 
-            if (datetime.datetime.utcnow() - updated_pointer) < datetime.timedelta(minutes=1) or time.time() - t1 > timeout:
+            if (datetime.datetime.utcnow() - updated_pointer) < datetime.timedelta(minutes=60) or time.time() - t1 > timeout:
                 break
 
             #TODO: Copy currency items up to the currency self.DB

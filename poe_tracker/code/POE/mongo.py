@@ -243,6 +243,23 @@ class Mongo(metaclass=Singleton):
                     [('_value', 1)],
                     name="_value",
             )
+            self.log.info("db.items.sold: Create 'category' index")
+            await self.db.items.sold.create_index(
+                    [('extended.category', 1)],
+                    name="category",
+            )
+            self.log.info("db.items.sold: Create 'subcategories' index")
+            await self.db.items.sold.create_index(
+                    [('extended.subcategories', 1)],
+                    name="subcategories",
+                    sparse=True,
+            )
+            self.log.info("db.items.sold: Create 'frametype' index")
+            await self.db.items.sold.create_index(
+                    [('frameType', 1)],
+                    name="frametype",
+                    sparse=True,
+            )
 
             # db.stashes
             self.log.info("Setup db.stashes")
