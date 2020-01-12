@@ -8,6 +8,7 @@ nose = "*"
 nose-timer = "*"
 coverage = "*"
 pymongo = "*"
+tensorflow = "*"
 
 [packages]
 discord = "*"
