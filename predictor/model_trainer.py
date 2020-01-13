@@ -52,8 +52,8 @@ def run(epochs=10, batch_size=100, resume=None, layers=2, neurons=64, activation
     early_stopping = tf.keras.callbacks.EarlyStopping(
             monitor='mean_absolute_error',
             mode='min',
-            patience=10,
-            min_delta=0.001
+            patience=5,
+            min_delta=0.005
     )
 
     hist = model.fit(
