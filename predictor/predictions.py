@@ -19,9 +19,9 @@ def parse_record(rr):
     return ex['item_properties'], ex['item_value']
 
 
-def run(n_examples=5):
+def run(n_examples=5, model_name="test.model"):
 
-    model = tf.keras.models.load_model("test.model", compile=True)
+    model = tf.keras.models.load_model(model_name, compile=True)
 
     filenames = list(map(str, pathlib.Path().glob("item_values.*.tfrecord")))
     raw_dataset = tf.data.TFRecordDataset(filenames, "GZIP")
