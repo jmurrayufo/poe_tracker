@@ -27,12 +27,22 @@ class TradeCommands:
     async def test(self, args):
         self.log.info("Init a tab")
         # stash = stash_tab.StashTab(args.stash_id)
-        tab_search = stash_tab.StashTabSearch()
-
-        async for stash in tab_search.search(account_name=args.account_name,stash_tab_name=args.stash_name):
-            async for item in stash.items():
-                await stash.count_item_stacks(typeLine=item.item_dict['typeLine'])
-
+        t0 = time.time()
+        async for item in self.db.items.find(
+                {
+                    "_value":{"$exists":1, "$ne":[0,1]},
+                    "_value_name":{"$ne":"Chaos Orb"},
+                }, 
+                sort=[("_updatedAt",-1)]
+        ):
+            if time.time() - t0 > 10:
+                return
+            typeLine = item['typeLine']
+            value = item['_value']
+            value_name = item['_value_name']
+            p = price.Price(_value=value, _value_name=value_name)
+            await args.message.channel.send(f"Found {typeLine} for {value} {value_name} ({await p.as_chaos()})")
+            await asyncio.sleep(1)
 
     async def stash(self, args):
         """account, tab_name

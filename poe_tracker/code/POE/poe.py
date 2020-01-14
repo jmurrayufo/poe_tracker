@@ -89,14 +89,14 @@ class POE:
         sub_parser = sp.add_parser('test',
             description='Test',
         )
-        sub_parser.add_argument(
-            "account_name",
-            help="Name of account to pull from",
-        )
-        sub_parser.add_argument(
-            "stash_name",
-            help="ID of tab to pull",
-        )
+        # sub_parser.add_argument(
+        #     "account_name",
+        #     help="Name of account to pull from",
+        # )
+        # sub_parser.add_argument(
+        #     "stash_name",
+        #     help="ID of tab to pull",
+        # )
         sub_parser.set_defaults(cmd=self.trade_commands.test)
 
         # Stash Tabs
@@ -230,8 +230,8 @@ class POE:
                     return
 
                 else:
-                    msg = parser.format_help()
-                    await message.channel.send(msg)
+                    # msg = parser.format_help()
+                    # await message.channel.send(msg)
                     return
             except NoValidCommands as e:
                 # We didn't get a subcommand, let someone else deal with this mess!

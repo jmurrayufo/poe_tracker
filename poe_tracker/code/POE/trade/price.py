@@ -2,6 +2,7 @@
 import re
 
 from ...Log import Log
+from . import estimator
 
 class Price:
     """
@@ -70,10 +71,10 @@ class Price:
     }
 
 
-    def __init__(self, note=None, stack_size = 1):
+    def __init__(self, note=None, _value=None, _value_name=None, stack_size = None):
         self.note = note
-        self.value = 0
-        self.value_name = "UNKNOWN"
+        self.value = _value
+        self.value_name = _value_name
         self.stack_size = stack_size
         self.log = Log()
 
@@ -129,3 +130,13 @@ class Price:
             self.value_name = self.item_remapping[self.value_name]
 
         return True
+
+
+    async def as_chaos(self):
+        """
+        """
+        e = estimator.Estimator(use_cache=True)
+        val,_ = await e.price_out(self.value_name, "currency", depth=0)
+        if self.stack_size is not None and val is not None:
+            return val * self.value * self.stack_size
+        return val * self.value
