@@ -23,11 +23,11 @@ class TradeCommands:
         self.args = Args()
 
 
-    async def test(self, args):
+    async def stash(self, args):
         """account, tab_name
         """
 
-        e = Estimator()
+        e = Estimator(use_cache=False)
 
         self.log.info(f"Ran test with {args}")
         await args.message.channel.send(f"Begining search for stash tab `{args.tab_name}`")

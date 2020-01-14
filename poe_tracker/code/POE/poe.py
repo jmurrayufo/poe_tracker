@@ -86,7 +86,7 @@ class POE:
         sp = parser.add_subparsers()
 
         # Test things
-        sub_parser = sp.add_parser('test',
+        sub_parser = sp.add_parser('stash',
             description='Estimate current currency values',
         )
         sub_parser.add_argument(
@@ -97,7 +97,7 @@ class POE:
             "tab_name",
             help="Name of stash to price check",
         )
-        sub_parser.set_defaults(cmd=self.trade_commands.test)
+        sub_parser.set_defaults(cmd=self.trade_commands.stash)
 
 
         # Show currency valuations

@@ -125,7 +125,7 @@ class Estimator:
                 },
                 upsert=True,
         )
-        
+
         # Update caching factors
         # If our value was close, grow by 1%
         # If our value is 5% or more off, shrink by 10%
