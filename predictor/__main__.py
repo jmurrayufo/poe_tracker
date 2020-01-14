@@ -15,8 +15,8 @@ from . import predictions, model_trainer, record_generator
 print("Predictor online!")
 
 # record_generator.run(max_batch_size=1000, max_batches=100)
-neurons = [32,64,128,256,512]
-depths = [2,4,8,16,32,64]
+neurons = [128,256,512]
+depths = [16,32,64]
 activates = ['relu','elu','selu']
 for n,d,a in product(neurons, depths, activates):
     try:
