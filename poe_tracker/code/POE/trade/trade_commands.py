@@ -27,7 +27,7 @@ class TradeCommands:
         """account, tab_name
         """
 
-        e = Estimator(use_cache=False)
+        e = Estimator(use_cache=True)
 
         self.log.info(f"Ran test with {args}")
         await args.message.channel.send(f"Begining search for stash tab `{args.tab_name}`")
