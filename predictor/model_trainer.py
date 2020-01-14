@@ -29,10 +29,16 @@ def run(epochs=10, batch_size=100, resume=None, layers=2, neurons=64, activation
 
     filenames = list(map(str, pathlib.Path().glob("item_values.*.tfrecord")))
     raw_dataset = tf.data.TFRecordDataset(filenames, "GZIP")
+    
+    raw_dataset = raw_dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
-    mapped_data = raw_dataset.map(parse_record)
+    # raw_dataset = raw_dataset.cache()
 
-    fmnist_train_ds = mapped_data.shuffle(batch_size).batch(batch_size)
+    mapped_data = raw_dataset.map(parse_record, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+
+    # mapped_data = raw_dataset.map(parse_record)
+
+    fmnist_train_ds = mapped_data.batch(batch_size)
 
     if resume:
         print("loading model from memory")
@@ -53,7 +59,7 @@ def run(epochs=10, batch_size=100, resume=None, layers=2, neurons=64, activation
             monitor='mean_absolute_error',
             mode='min',
             patience=5,
-            min_delta=0.005
+            min_delta=0.001
     )
 
     hist = model.fit(

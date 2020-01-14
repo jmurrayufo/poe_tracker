@@ -15,9 +15,9 @@ from . import predictions, model_trainer, record_generator
 print("Predictor online!")
 
 # record_generator.run(max_batch_size=1000, max_batches=100)
-neurons = [16,32,64,128,256,512]
+neurons = [32,64,128,256,512]
 depths = [2,4,8,16,32,64]
-activates = ['relu','tanh','elu','selu']
+activates = ['relu','elu','selu']
 for n,d,a in product(neurons, depths, activates):
     try:
         model_trainer.run(epochs=250, batch_size=1000, layers=d, neurons=n, activation=a)
@@ -26,4 +26,4 @@ for n,d,a in product(neurons, depths, activates):
         time.sleep(5)
         continue
     predictions.run(10,f"models/{a}/{d}x{n}")
-    gc.collect(2)
+    gc.collect()
