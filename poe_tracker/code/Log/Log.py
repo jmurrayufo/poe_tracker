@@ -1,16 +1,15 @@
 import logging
 
+from ..Singleton import Singleton
+from ..args import Args
 
-class Log:
-    __shared_state = {}
+class Log(metaclass=Singleton):
+
     def __init__(self, args=None):
-
-        # Borg pattern
-        self.__dict__ = self.__shared_state
 
         # In cases where we are just being created without args, just return
         if args is None:
-            return
+            args = Args()
 
         self.args = args
 

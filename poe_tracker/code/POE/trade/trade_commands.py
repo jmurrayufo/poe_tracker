@@ -2,6 +2,7 @@
 from . import price
 from .estimator import Estimator
 from .. import mongo
+from ..objects import stash_tab
 from ...args import Args
 from ...Log import Log
 from fuzzywuzzy import fuzz 
@@ -21,6 +22,18 @@ class TradeCommands:
         self.ready = False
         self.db = mongo.Mongo().db
         self.args = Args()
+
+
+    async def test(self, args):
+        self.log.info("Init a tab")
+        # stash = stash_tab.StashTab(args.stash_id)
+        tab_search = stash_tab.StashTabSearch()
+
+        async for stash in tab_search.search(account_name=args.account_name,stash_tab_name=args.stash_name):
+            print(stash)
+            async for item in stash.items():
+                print(item)
+
 
 
     async def stash(self, args):

@@ -1,90 +1,50 @@
 
 
-from ...Log import Log
+# from ...Log import Log
+from .. import mongo
 
-class ItemBase:
+class Item:
     """Base of all items
     """
 
-    def __init__(self, item_dict=None):
+    def __init__(self, item_dict=None, item_id=None):
+        self.db = mongo.Mongo().db
+        self.item_dict = item_dict
+        self.item_id = item_id
 
-        self.x = item_dict.get("x", None)
-        self.y = item_dict.get("y", None)
-
-        self.h = item_dict.get("h", None)
-        self.w = item_dict.get("w", None)
-
-        self.name = item_dict.get("name", None)
-        self.type_line = item_dict.get("type_line", None)
-        self.league = item_dict.get("league", None)
-        self.frame_type = item_dict.get("frameType", None)
-
-        self.note = item_dict.get("note", None)
-        self._has_valid_note = False
-
-
-    def parse_sellers_note(self):
-        """Check to see if we have a valid selling note, and save that data.
-        Returns:
-            True on sucessful parsing
-            False on unparasble or missing note field
+    
+    async def pull(self):
+        """Pull current state from the mongoDB
         """
-        if self._has_valid_note is True:
-            return True
-        if self.note is None:
-            return False
+        if self.item_id is None:
+            raise ValueError("Cannot search for `None`")
+        self.item_dict = await self.db.items.find_one({"id":self.item_id})
 
 
-        # if 'note' not in item:
-        #     continue
-        # if not item['note'].startswith("~"):
-        #     continue
-        # try:
-        #     item['note'].encode().decode('ascii')
-        # except UnicodeDecodeError:
-        #     continue
-        # if item['extended']['category'] != "currency":
-        #     continue
-
-        # Parse out the notes field if we can
-        self.log.info(f"Attemt to split {item_dict['note']}")
-        match_obj = re.search(r"~(b\/o|price) *([\d\.\/,]+)? *([\w\- ']+)$", item_dict['note'])
-        if match_obj:
-            self.log.info(match_obj.groups())
-            pass
-        else:
-            self.log.error("Parse failed")
-            with open("errors.txt","a") as fp:
-                fp.write(f"{item_dict['note']}\n")
-            return
-
-        try:
-            value = eval(match_obj.group(2)) if match_obj.group(2) is not None else 1
-        except (SyntaxError, ZeroDivisionError):
-            self.log.exception("Eval errored out, catch and return")
-            return
-
-        if type(value) not in [float,int]:
-            with open("errors.txt","a") as fp:
-                fp.write(f"{item_dict['note']}\n")
-            self.log.error("Failed to parse")
-            return
-
-# We really should just move item base, but i'm lazy
-from . import currency
-
-class ItemGenerator:
-
-    log = Log()
-
-    def __new__(cls, item_dict):
+    async def iter_items(self):
+        """Iterate through items and return Item() objects for each
         """
-        Given an item dict from the POE Stash Tab API, return some sort of item class
+        if self.item_dict is None:
+            await self.pull()
+        
+
+    async def count_item_stacks(self, typeLine):
+        """Given a specific `typeLine`, return the total count in this stash
         """
 
-        if item_dict['extended']['category'] == "currency":
-            return currency.Currency(item_dict)
 
-        raise TypeError("No valid item type for this exists yet!")
+    def __len__(self):
+        """The majority of things don't stack
+        """
+        if self.item_dict is not None and "stackSize" in self.item_dict:
+            return self.item_dict['stackSize']
+        return 1
 
 
+class Currency(Item):
+
+
+    async def value(self):
+        """Convery self to value in units of Chaos Orbs
+        """
+        pass

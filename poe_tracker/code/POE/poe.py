@@ -86,6 +86,20 @@ class POE:
         sp = parser.add_subparsers()
 
         # Test things
+        sub_parser = sp.add_parser('test',
+            description='Test',
+        )
+        sub_parser.add_argument(
+            "account_name",
+            help="Name of account to pull from",
+        )
+        sub_parser.add_argument(
+            "stash_name",
+            help="ID of tab to pull",
+        )
+        sub_parser.set_defaults(cmd=self.trade_commands.test)
+
+        # Stash Tabs
         sub_parser = sp.add_parser('stash',
             description='Estimate current currency values',
         )
