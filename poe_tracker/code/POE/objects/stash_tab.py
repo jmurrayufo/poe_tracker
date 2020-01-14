@@ -37,12 +37,25 @@ class StashTab:
         for item_id in self.stash_dict['items']:
             i = item.Item(item_id=item_id)
             await i.pull()
+            if i.item_dict is None:
+                continue
             yield i
 
 
-    async def count_item_stacks(self, typeLine):
+    async def count_item_stacks(self, typeLine, noteless=False):
         """Given a specific `typeLine`, return the total count in this stash
+
+            If `noteless` is is set, only count items without a note set.
         """
+        total = 0
+        async for item in self.items():
+            if item.item_dict['typeLine'] != typeLine:
+                continue
+            if noteless:
+                if 'note' in item.item_dict:
+                    continue
+            total += len(item)
+        return total
 
 
 

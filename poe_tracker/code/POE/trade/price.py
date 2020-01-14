@@ -102,7 +102,7 @@ class Price:
             # Prevent > 64 bit numbers from being parsed if someone gives us a really stupid field
             # Seriously, people list things at 9999999999999999999999999999999999999999 (10**40-1)
             if self.value >= 2**63:
-                self.log.error(f"Saw value of `{self.value}`. Note was `{self.note}`. Throwing out value.")
+                # self.log.error(f"Saw value of `{self.value}`. Note was `{self.note}`. Throwing out value.")
                 return False
         except (SyntaxError, ZeroDivisionError):
             return False
@@ -129,9 +129,3 @@ class Price:
             self.value_name = self.item_remapping[self.value_name]
 
         return True
-
-class Estimate:
-
-    def __init__(self, m=2):
-        self.m=m
-

@@ -12,6 +12,12 @@ class Item:
         self.item_dict = item_dict
         self.item_id = item_id
 
+
+    def __str__(self):
+        if self.item_dict is None:
+            return super().__str__()
+        return f"I<{self.item_dict['typeLine']}>"
+
     
     async def pull(self):
         """Pull current state from the mongoDB
@@ -26,11 +32,6 @@ class Item:
         """
         if self.item_dict is None:
             await self.pull()
-        
-
-    async def count_item_stacks(self, typeLine):
-        """Given a specific `typeLine`, return the total count in this stash
-        """
 
 
     def __len__(self):

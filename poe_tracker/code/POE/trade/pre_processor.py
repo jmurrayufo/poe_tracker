@@ -64,6 +64,37 @@ class PreProcessor:
         if len(stash_dict['items']) == 0:
             return
 
+        # TODO: Preprocess item merge stacks with priced stacks
+        noted_items = {}
+        for item_dict in stash_dict['items']:
+            if item_dict['extended']['category'] != "currency":
+                continue
+            if 'stackSize' not in item_dict:
+                continue
+            if 'note' in item_dict and Price(item_dict['note']).parse():
+                noted_items[item_dict['typeLine']] = item_dict['id']
+
+        prune_ids = []
+        for item_dict in stash_dict['items']:
+            if item_dict['extended']['category'] != "currency":
+                continue
+            if 'note' in item_dict:
+                continue
+            if 'stackSize' not in item_dict:
+                continue
+            if item_dict['typeLine'] not in noted_items:
+                continue
+            prune_ids.append(item_dict['id'])
+
+            # Find the item to merge with, and incriment it's stack size
+            for merge_dict in stash_dict['items']:
+                if merge_dict['id'] == noted_items[item_dict['typeLine']]:
+                    merge_dict['stackSize'] += item_dict['stackSize']
+                    break
+
+        # We might not even care about this? Pruning it keeps total items cleaner though...
+        stash_dict['items'] = [x for x in stash_dict['items'] if x['id'] not in prune_ids]
+
         # Loop through items and build list of `id`s.
         new_ids = []
         for item_dict in stash_dict['items']:

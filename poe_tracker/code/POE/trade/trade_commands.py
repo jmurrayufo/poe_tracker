@@ -30,10 +30,8 @@ class TradeCommands:
         tab_search = stash_tab.StashTabSearch()
 
         async for stash in tab_search.search(account_name=args.account_name,stash_tab_name=args.stash_name):
-            print(stash)
             async for item in stash.items():
-                print(item)
-
+                await stash.count_item_stacks(typeLine=item.item_dict['typeLine'])
 
 
     async def stash(self, args):
@@ -53,6 +51,9 @@ class TradeCommands:
                 }
         ):
             stashes.append(stash_dict)
+        if not len(stashes):
+            await args.message.channel.send(f"<@{args.message.author.id}>, I didn't find any stashes named `{args.tab_name}`. Try again?")
+            return
         delay_message = await args.message.channel.send(f"<@{args.message.author.id}>, this might take me a moment...")
         total_value = 0.0
         t1 = time.time()
@@ -67,7 +68,7 @@ class TradeCommands:
                 if item_dict['extended']['category'] not in ['currency', 'cards']:
                     continue
                 
-                value = await e.price_out(item_dict['typeLine'], item_dict['extended']['category'])
+                value, count = await e.price_out(item_dict['typeLine'], item_dict['extended']['category'])
                 
                 if value is None:
                     continue
@@ -94,9 +95,9 @@ class TradeCommands:
         match_str = sorted(match_str, key=lambda x:x[0])[-1]
         await args.message.channel.send(f"Searching for {match_str[1]} ({match_str[0]})")
 
-        value = await e.price_out(match_str[1], "currency")
+        value, count = await e.price_out(match_str[1], "currency")
 
-        await args.message.channel.send(f"Estimated at {value:,.2f}C")
+        await args.message.channel.send(f"Estimated at {value:,.2f}C ({count:,.0f})")
 
         if args.plot:
             import matplotlib
@@ -121,55 +122,3 @@ class TradeCommands:
             # Send message to discord
             self.log.info("Send to discord")
             await args.message.channel.send(file=f)
-
-
-    # async def _estimate(self, typeLine, m=2.0, percentile=20):
-    #     values = []
-    #     async for item_dict in self.db.items.currency.find(
-    #             {
-    #                 "typeLine": typeLine,
-    #                 "league":"Metamorph",
-    #                 "_value_name" : "Chaos Orb",
-    #                 "_value": {"$ne":None},
-    #             }
-    #     ):
-    #         values.append(item_dict['_value'])
-
-    #     # Find Inverse values as well
-    #     async for item_dict in self.db.items.currency.find(
-    #             {
-    #                 "typeLine": "Chaos Orb",
-    #                 "league":"Metamorph",
-    #                 "_value_name" : typeLine,
-    #                 "_value": {"$exists":1},
-    #                 "_value": {"$ne": 0}
-    #             }
-    #     ):
-    #         # self.log.info(item_dict)
-    #         # await asyncio.sleep(1)
-    #         values.append(1/item_dict['_value'])
-
-    #     if len(values) == 0:
-    #         return None
-        
-    #     values = np.asarray(values)
-
-    #     values = self.reject_outliers(values, m=m)
-
-    #     data = {}
-    #     data['mean'] = np.mean(values)
-    #     data['median'] = np.median(values)
-    #     data['stddev'] = np.std(values)
-    #     data['min'] = np.amin(values)
-    #     data['max'] = np.amax(values)
-    #     data['estimate'] = np.percentile(values, percentile)
-    #     data['count'] = len(values)
-    #     return data
-        
-
-    # @staticmethod
-    # def reject_outliers(data, m = 2.0):
-    #     d = np.abs(data - np.median(data))
-    #     mdev = np.median(d)
-    #     s = d/mdev if mdev else 0.
-    #     return data[s<m]

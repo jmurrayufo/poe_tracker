@@ -212,38 +212,38 @@ class POE:
             const=24,
         )
         sub_parser.set_defaults(cmd=self.accounts_commands.plot)
+        async with message.channel.typing():
+            try:
+                self.log.info("Parse Arguments")
+                results = parser.parse_args(shlex.split(message.content)[1:])
+                # self.log.info(results)
 
-        try:
-            self.log.info("Parse Arguments")
-            results = parser.parse_args(shlex.split(message.content)[1:])
-            # self.log.info(results)
+                if type(results) == str:
+                    self.log.info("Got normal return, printing and returning")
+                    self.log.info(type(results))
+                    await message.channel.send(f"```{results}```")
+                    return
 
-            if type(results) == str:
-                self.log.info("Got normal return, printing and returning")
-                self.log.info(type(results))
-                await message.channel.send(f"```{results}```")
-                return
+                elif hasattr(results, 'cmd'):
+                    # Looks like we got a valid command parsing, execute!
+                    await results.cmd(results)
+                    return
 
-            elif hasattr(results, 'cmd'):
-                # Looks like we got a valid command parsing, execute!
-                await results.cmd(results)
-                return
-
-            else:
-                msg = parser.format_help()
+                else:
+                    msg = parser.format_help()
+                    await message.channel.send(msg)
+                    return
+            except NoValidCommands as e:
+                # We didn't get a subcommand, let someone else deal with this mess!
+                await message.channel.send(str(e))
+                self.log.error(e)
+            except HelpNeeded as e:
+                self.log.info("TypeError Return")
+                self.log.info(e)
+                msg = f"{e}. You can add `-h` or `--help` to any command to get help!"
                 await message.channel.send(msg)
                 return
-        except NoValidCommands as e:
-            # We didn't get a subcommand, let someone else deal with this mess!
-            await message.channel.send(str(e))
-            self.log.error(e)
-        except HelpNeeded as e:
-            self.log.info("TypeError Return")
-            self.log.info(e)
-            msg = f"{e}. You can add `-h` or `--help` to any command to get help!"
-            await message.channel.send(msg)
             return
-        return
 
 
 
