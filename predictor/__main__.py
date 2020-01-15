@@ -14,11 +14,11 @@ from . import predictions, model_trainer, record_generator
 
 print("Predictor online!")
 # record_generator.run(max_batch_size=1000, max_batches=100)
-record_generator.run(max_batch_size=1000, max_batches=100)
+# record_generator.run(max_batch_size=10000, max_batches=100)
 
 
 neurons = [8,16,32]
-depths = [2,4,8]
+depths = [1,2,4]
 activates = [
     'relu',
     # 'elu',

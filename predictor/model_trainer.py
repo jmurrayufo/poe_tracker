@@ -20,15 +20,15 @@ def parse_record(rr):
 
 def run(epochs=10, batch_size=100, resume=None, layers=2, neurons=64, activation='relu'):
     print(f"{activation}/{layers}x{neurons}")
-    log_dir=f"logs/fit/{activation}/D:{layers}xN:{neurons}-{datetime.datetime.now().strftime('%Y%m%dT%H%M%S')}"
+    log_dir=f"logs/fit/{activation}/{layers}x{neurons}-{datetime.datetime.now().strftime('%Y%m%dT%H%M%S')}"
     tensorboard_callback = tf.keras.callbacks.TensorBoard(
         log_dir=log_dir, 
         histogram_freq=1,
         profile_batch=0,
         )
 
-    filenames = list(map(str, pathlib.Path().glob("item_values.*.tfrecord")))
-    raw_dataset = tf.data.TFRecordDataset(filenames, "GZIP")
+    filenames = list(map(str, pathlib.Path().glob("data/item_values.*.tfrecord")))
+    raw_dataset = tf.data.TFRecordDataset(filenames, num_parallel_reads=5)
     
     raw_dataset = raw_dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
@@ -47,8 +47,13 @@ def run(epochs=10, batch_size=100, resume=None, layers=2, neurons=64, activation
         model = tf.keras.models.load_model(resume, compile=True)
     else:
         model = tf.keras.Sequential()
-        for i in range(layers):
-            model.add(tf.keras.layers.Dense(neurons, activation=activation))
+        model.add(tf.keras.layers.Dense(neurons, activation=activation, input_shape=(6689,)))
+        for i in range(layers-1):
+            model.add(tf.keras.layers.Dense(
+                    neurons, 
+                    activation=activation,
+                    #kernel_regularizer=tf.keras.regularizers.l1(0.001),
+                    ))
         model.add(tf.keras.layers.Dense(16, activation='softmax'))
 
         model.compile(
@@ -60,7 +65,7 @@ def run(epochs=10, batch_size=100, resume=None, layers=2, neurons=64, activation
     early_stopping = tf.keras.callbacks.EarlyStopping(
             monitor='val_accuracy',
             mode='max',
-            patience=150,
+            patience=50,
             min_delta=0.01
     )
 

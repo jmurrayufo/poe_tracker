@@ -19,12 +19,18 @@ def _run(coro):
 
 
 def convert_value(value, value_name, db):
-    if "value_name" == "Chaos Orb":
+    if value_name == "Chaos Orb":
         return value
     cache_dict = db.items.price.cache.find_one({"typeLine":value_name, "league":"Metamorph"})
     if cache_dict is None:
         return None
     return cache_dict['_value'] * value
+
+def write_batch(item_batch, stats):
+    print(f"Parsed batch {stats['current_batch']}, {stats['items_parsed']:,}/{len(item_batch)} items at a rate of {stats['items_parsed']/(time.time()-stats['time_start']):,.0f} items/s")
+    with tf.io.TFRecordWriter(f"data/item_values.{stats['current_batch']}.tfrecord") as writer:
+        for item in item_batch:
+            writer.write(item.SerializeToString())
 
 
 def set_values(np_array, mod, _type, db):
@@ -57,19 +63,19 @@ def run(max_batch_size=500, max_batches=5):
     print(array_size)
 
     _filter = {
-        # "extended.category":"jewels",
+        "extended.category":"jewels",
         "frameType":2,
     }
 
     item_batch = []
-    current_batch = 0
 
     stats = {}
     stats['items_parsed'] = 0
     stats['time_start'] = time.time()
+    stats['current_batch'] = 0
 
     # Cleanup old files
-    files = pathlib.Path().glob("item_values.*.tfrecord")
+    files = pathlib.Path().glob("data/item_values.*.tfrecord")
     for f in files:
         f.unlink()
 
@@ -78,13 +84,18 @@ def run(max_batch_size=500, max_batches=5):
 
         data = np.zeros(array_size, dtype=np.float32)
         item_value = convert_value(item['_value'], item['_value_name'], db)
-        if item_value is None: continue
+        if item_value is None: 
+            print(f"Skip {item['_value']},{item['_value_name']}")
+            time.sleep(1)
+            continue
         # value = np.asarray([item['_value']/100.0], dtype=np.float32)
         value = np.zeros(16, dtype=np.float32)
         for idx in range(16):
             if item_value < edges[idx+1]:
                 value[idx] = 1
                 break
+        else:
+            continue
         try:
             if "explicitMods" in item:
                 for mod in item['explicitMods']:
@@ -102,6 +113,7 @@ def run(max_batch_size=500, max_batches=5):
                 for mod in item['enchantMods']:
                     set_values(data, mod, "exhant", db)
         except ZeroDivisionError:
+            print("div/0 error")
             continue
 
         example = tf.train.Example(features=tf.train.Features(feature={
@@ -111,11 +123,11 @@ def run(max_batch_size=500, max_batches=5):
 
         item_batch.append(example)
         if len(item_batch) >= max_batch_size:
-            print(f"Parsed batch {current_batch}, {stats['items_parsed']:,} items at a rate of {stats['items_parsed']/(time.time()-stats['time_start']):,.0f} items/s")
-            with tf.io.TFRecordWriter(f'item_values.{current_batch}.tfrecord', "GZIP") as writer:
-                for item in item_batch:
-                    writer.write(item.SerializeToString())
+            write_batch(item_batch, stats)
             item_batch = []
-            current_batch += 1
-        if current_batch >= max_batches:
+            stats['current_batch'] += 1
+        if stats['current_batch'] == max_batches:
             break
+    
+    if len(item_batch) >= 1:
+        write_batch(item_batch, stats)
