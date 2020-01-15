@@ -32,17 +32,20 @@ def run(n_examples=5, model_name="test.model"):
     example = np.asarray(example)
 
     examples = np.asarray([x.numpy() for x in example.T[0]])
-    answers = np.asarray([x.numpy() for x in example.T[1]]).T[0]
+    answers = np.asarray([x.numpy() for x in example.T[1]])
 
+    np.set_printoptions(precision=2, suppress=True, linewidth=1000)
     try:
         prediction = model.predict(examples)
-        prediction = np.sum(prediction, axis=1)
+        # prediction = np.sum(prediction, axis=1)
         for i in range(n_examples):
             print()
             print(i)
-            print(f"Predict: {prediction[i]*100:5.1f}")
-            print(f" Listed: {answers[i]*100:5.1f}")
-            print(f"  Error: {(prediction[i] - answers[i])*100:5.1f}")
+            # print(f"Predict: {prediction[i]}")
+            # print(f" Listed: {answers[i]}")
+            combo = [prediction[i], answers[i]]
+            print(f"  Combo: \n{np.asarray(combo)}")
+            # print(f"  Error: {(prediction[i] - answers[i])}")
     except Exception as e:
         print(type(e), e)
         raise

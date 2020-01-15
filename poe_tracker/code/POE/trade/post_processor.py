@@ -73,7 +73,7 @@ class PostProcessor:
 
         # self.log.info(f"Currently {datetime.datetime.utcnow() - updated_pointer} behind")
 
-        if (datetime.datetime.utcnow() - updated_pointer) < datetime.timedelta(minutes=120):
+        if (datetime.datetime.utcnow() - updated_pointer) < datetime.timedelta(minutes=70):
             return
         start_update = time.time()
         self.log.info("Begin cleaning process")

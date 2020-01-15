@@ -20,7 +20,7 @@ def parse_record(rr):
 
 def run(epochs=10, batch_size=100, resume=None, layers=2, neurons=64, activation='relu'):
     print(f"{activation}/{layers}x{neurons}")
-    log_dir=f"logs/fit/{activation}/{layers}x{neurons}"
+    log_dir=f"logs/fit/{activation}/D:{layers}xN:{neurons}-{datetime.datetime.now().strftime('%Y%m%dT%H%M%S')}"
     tensorboard_callback = tf.keras.callbacks.TensorBoard(
         log_dir=log_dir, 
         histogram_freq=1,
@@ -38,7 +38,9 @@ def run(epochs=10, batch_size=100, resume=None, layers=2, neurons=64, activation
 
     # mapped_data = raw_dataset.map(parse_record)
 
-    fmnist_train_ds = mapped_data.batch(batch_size)
+    validation_ds = mapped_data.take(1000).batch(1000)
+
+    fmnist_train_ds = mapped_data.skip(1000).batch(batch_size)
 
     if resume:
         print("loading model from memory")
@@ -47,26 +49,30 @@ def run(epochs=10, batch_size=100, resume=None, layers=2, neurons=64, activation
         model = tf.keras.Sequential()
         for i in range(layers):
             model.add(tf.keras.layers.Dense(neurons, activation=activation))
-        model.add(tf.keras.layers.Dense(1))
+        model.add(tf.keras.layers.Dense(16, activation='softmax'))
 
         model.compile(
                 optimizer='adam',
                 loss='mean_squared_error', 
-                metrics=['mean_absolute_error', 'mean_absolute_percentage_error'],
+                metrics=['accuracy'],
         )
 
     early_stopping = tf.keras.callbacks.EarlyStopping(
-            monitor='mean_absolute_error',
-            mode='min',
-            patience=5,
-            min_delta=0.001
+            monitor='val_accuracy',
+            mode='max',
+            patience=150,
+            min_delta=0.01
     )
 
     hist = model.fit(
             x=fmnist_train_ds, 
             epochs=epochs, 
             verbose=1,
-            callbacks=[tensorboard_callback, early_stopping],
+            callbacks=[
+                tensorboard_callback, 
+                early_stopping,
+            ],
+            validation_data=validation_ds,
     )
 
     model.save(f"models/{activation}/{layers}x{neurons}")
