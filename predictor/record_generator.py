@@ -65,6 +65,7 @@ def run(max_batch_size=500, max_batches=5):
     _filter = {
         "extended.category":"jewels",
         "frameType":2,
+        "league":"Metamorph",
     }
 
     item_batch = []

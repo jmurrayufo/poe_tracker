@@ -52,7 +52,7 @@ def run(epochs=10, batch_size=100, resume=None, layers=2, neurons=64, activation
             model.add(tf.keras.layers.Dense(
                     neurons, 
                     activation=activation,
-                    #kernel_regularizer=tf.keras.regularizers.l1(0.001),
+                    # kernel_regularizer=tf.keras.regularizers.l1(0.001),
                     ))
         model.add(tf.keras.layers.Dense(16, activation='softmax'))
 
@@ -65,8 +65,8 @@ def run(epochs=10, batch_size=100, resume=None, layers=2, neurons=64, activation
     early_stopping = tf.keras.callbacks.EarlyStopping(
             monitor='val_accuracy',
             mode='max',
-            patience=50,
-            min_delta=0.01
+            patience=250,
+            min_delta=0
     )
 
     hist = model.fit(

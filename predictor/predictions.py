@@ -41,10 +41,15 @@ def run(n_examples=5, model_name="test.model"):
         for i in range(n_examples):
             print()
             print(i)
+            p_argmax = np.argmax(prediction[i])
+            a_argmax = np.argmax(answers[i])
             # print(f"Predict: {prediction[i]}")
             # print(f" Listed: {answers[i]}")
             combo = [prediction[i], answers[i]]
-            print(f"  Combo: \n{np.asarray(combo)}")
+            #print(f"Combo: \n{np.asarray(combo)}")
+            print(f"P: {p_argmax} ({prediction[i][np.argmax(prediction[i])]:.0%})")
+            print(f"A: {a_argmax}")
+            print(f"E: {abs(a_argmax-p_argmax)}")
             # print(f"  Error: {(prediction[i] - answers[i])}")
     except Exception as e:
         print(type(e), e)

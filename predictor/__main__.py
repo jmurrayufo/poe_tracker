@@ -17,12 +17,14 @@ print("Predictor online!")
 # record_generator.run(max_batch_size=10000, max_batches=100)
 
 
-neurons = [8,16,32]
-depths = [1,2,4]
+neurons = [8,16,32,64,128,256]
+depths = [2,4]
 activates = [
     'relu',
-    # 'elu',
-    # 'selu',
+    'elu',
+    'selu',
+    'sigmoid',
+    #'linear',
     ]
 for n,d,a in product(neurons, depths, activates):
     model_trainer.run(epochs=1000, batch_size=1000, layers=d, neurons=n, activation=a)
