@@ -77,7 +77,7 @@ class Plotter:
         self.log.info("Config plots")
         ax = plt.gca()
 
-        plt.legend(oc='center left', bbox_to_anchor=(1, 0.5))
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
         ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%Y-%m-%d %H:%M:%S'))
         plt.xticks( rotation=25 )
