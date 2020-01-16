@@ -9,10 +9,6 @@ import re
 
 
 
-
-
-
-
 class ModFinder:
 
     client = pymongo.MongoClient('atlas.lan:27017', username='poe', password='poe', authSource='admin')
@@ -95,7 +91,7 @@ class ModFinder:
         dt0 = datetime.datetime.now()
         i = 0
         last_update = time.time()
-        for item in self.db.items.find({},sort=[("_updatedAt",1)]):
+        for item in self.db.items.find({},sort=[("_updatedAt",-1)]):
             if time.time() - last_update > 1:
                 print(datetime.datetime.now()-dt0,f" {i:,d} ", datetime.datetime.utcnow() - item['_updatedAt'])
                 last_update = time.time()

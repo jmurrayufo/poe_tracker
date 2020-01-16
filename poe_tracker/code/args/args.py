@@ -37,4 +37,9 @@ class Args(metaclass=Singleton):
 
 
     def __getattr__(self, attr):
+        # If we get called without a default value, just use defaults for now
+        if 'args' not in self.__dict__:
+            self.parse("")
         return getattr(self.args, attr)
+
+
