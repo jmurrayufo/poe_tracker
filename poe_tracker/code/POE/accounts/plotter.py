@@ -77,7 +77,7 @@ class Plotter:
         self.log.info("Config plots")
         ax = plt.gca()
 
-        plt.legend()
+        plt.legend(oc='center left', bbox_to_anchor=(1, 0.5))
 
         ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%Y-%m-%d %H:%M:%S'))
         plt.xticks( rotation=25 )
@@ -87,7 +87,6 @@ class Plotter:
         ax.set_ylabel('XP')
 
         #plt.subplots_adjust(bottom=0.2, left=0.2)
-
         plt.grid()
 
         # Save figure to ram for printing to discord
