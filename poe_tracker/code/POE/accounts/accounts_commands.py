@@ -124,20 +124,6 @@ class Accounts_Commands:
             # correct dicts later!
             characters.append(char_dict['name'])
 
-
-        # if args.all:
-        #     if not await self.poe_sql.has_character_by_name(char_name):
-        #         # await args.message.channel.send("Character not found.")
-        #         # return
-        #         continue
-
-        #     char_dict = await self.poe_sql.get_character_dict_by_name(char_name)
-        #     c = Character(char_dict, None)
-        #     characters.append(c)
-        #     self.log.info(f"Appended {c}")
-            
-
-
         # If we didn't get any names, maybe we were just asked to filter a league?
         if args.league is not None:
             chars = self.db.characters.find({"league":re.compile(args.league)})
@@ -189,20 +175,10 @@ class Accounts_Commands:
         "--recent",
         "--account ACCOUNT",
         """
+        return
         message = "```\n"
-        async for char in self.poe_sql.iter_characters():
-            # self.log.info(char)
-            # em.add_field(name=char['aname'], value=char['name'])
-            if args.league and args.league in char['league'].lower():
-                message += f"{char['name']:20} ({char['ac_name']})\n"
-            elif args.league is None:
-                message += f"{char['name']:20} ({char['ac_name']})\n"
 
-            if len(message) > 1900:
-                message += "```"
-                await args.message.author.send(message)
-                message = "```\n"
-
+        # TODO: Pull characters from Mongo
 
         message += "```"
         await args.message.author.send(message)

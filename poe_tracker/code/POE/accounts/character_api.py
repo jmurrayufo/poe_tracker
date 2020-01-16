@@ -76,7 +76,8 @@ class Character_Api(metaclass=Singleton):
         async with self.lock:
             await self.timeout_avoidance()
             self.log.debug(f"Calling with params {params}")
-            r = await httpx.get(url, params=params)
+            async with httpx.AsyncClient() as client:
+                r = await client.get(url, params=params)
             try:
                 r.raise_for_status()
                 await self.prime_timeout_avoidance(r.headers)

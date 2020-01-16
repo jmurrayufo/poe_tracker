@@ -4,7 +4,6 @@ import os
 
 from .code.Client import Client
 from .code.Log import Log
-from .code.SQL import SQL
 from .code.POE import POE
 from .code.args import Args
 # from .code.Stats import Stats

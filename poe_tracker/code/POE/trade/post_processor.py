@@ -56,7 +56,8 @@ class PostProcessor:
         host = self.influxDB_host + '/write'
         params = {"db":"poe","precision":"m"}
         try:
-            r = await httpx.post( host, params=params, data=data, timeout=1)
+            async with httpx.AsyncClient() as client:
+                r = await client.post( host, params=params, data=data, timeout=1)
             r.raise_for_status()
             pass
             # print(data)
@@ -72,7 +73,7 @@ class PostProcessor:
 
         # self.log.info(f"Currently {datetime.datetime.utcnow() - updated_pointer} behind")
 
-        if (datetime.datetime.utcnow() - updated_pointer) < datetime.timedelta(minutes=30):
+        if (datetime.datetime.utcnow() - updated_pointer) < datetime.timedelta(minutes=70):
             return
         start_update = time.time()
         self.log.info("Begin cleaning process")
@@ -85,7 +86,7 @@ class PostProcessor:
             
             updated_pointer = stash['_updatedAt']
 
-            if (datetime.datetime.utcnow() - updated_pointer) < datetime.timedelta(minutes=15) or time.time() - t1 > timeout:
+            if (datetime.datetime.utcnow() - updated_pointer) < datetime.timedelta(minutes=60) or time.time() - t1 > timeout:
                 break
 
             #TODO: Copy currency items up to the currency self.DB
@@ -99,8 +100,8 @@ class PostProcessor:
 
             results = await results.to_list(None)
             for sold_item in results:
-                # Add to sold items
-                if "note" in sold_item:
+                # Add to sold items. Check to make sure we got a value (data is useless without it!)
+                if "_value" in sold_item:
                     sold_item.pop("_id", None)
                     sold_item.pop("_updatedAt", None)
                     sold_item.pop("_createdAt", None)

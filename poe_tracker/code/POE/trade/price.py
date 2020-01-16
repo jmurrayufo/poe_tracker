@@ -2,6 +2,7 @@
 import re
 
 from ...Log import Log
+from . import estimator
 
 class Price:
     """
@@ -70,10 +71,10 @@ class Price:
     }
 
 
-    def __init__(self, note=None, stack_size = 1):
+    def __init__(self, note=None, _value=None, _value_name=None, stack_size = None):
         self.note = note
-        self.value = 0
-        self.value_name = "UNKNOWN"
+        self.value = _value
+        self.value_name = _value_name
         self.stack_size = stack_size
         self.log = Log()
 
@@ -99,7 +100,11 @@ class Price:
 
         try:
             self.value = eval(match_obj.group(2)) if match_obj.group(2) is not None else 1
-            self.value /= self.stack_size
+            # Prevent > 64 bit numbers from being parsed if someone gives us a really stupid field
+            # Seriously, people list things at 9999999999999999999999999999999999999999 (10**40-1)
+            if self.value >= 2**63:
+                # self.log.error(f"Saw value of `{self.value}`. Note was `{self.note}`. Throwing out value.")
+                return False
         except (SyntaxError, ZeroDivisionError):
             return False
         except TypeError:
@@ -126,8 +131,12 @@ class Price:
 
         return True
 
-class Estimate:
 
-    def __init__(self, m=2):
-        self.m=m
-
+    async def as_chaos(self):
+        """
+        """
+        e = estimator.Estimator(use_cache=True)
+        val,_ = await e.price_out(self.value_name, "currency", depth=0)
+        if self.stack_size is not None and val is not None:
+            return val * self.value * self.stack_size
+        return val * self.value

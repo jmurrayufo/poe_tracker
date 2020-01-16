@@ -43,7 +43,8 @@ class ChangeID:
         """Pull current value from poe.ninja/stats
         """
         try:
-            request = await httpx.get("https://poe.ninja/api/Data/GetStats")
+            async with httpx.AsyncClient() as client:
+                request = await client.get("https://poe.ninja/api/Data/GetStats")
         except httpx.exceptions.HTTPError:
             return
         request.raise_for_status()
@@ -62,9 +63,8 @@ class ChangeID:
         host = self.influxDB_host + '/write'
         params = {"db":"poe","precision":"s"}
         try:
-            r = await httpx.post( host, params=params, data=data, timeout=1)
-            pass
-            # print(data)
+            async with httpx.AsyncClient() as client:
+                r = await client.post( host, params=params, data=data, timeout=1)
         except (KeyboardInterrupt, SystemExit, RuntimeError):
             raise
             return

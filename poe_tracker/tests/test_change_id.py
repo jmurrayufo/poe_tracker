@@ -4,7 +4,7 @@ import unittest
 
 from ..code.POE.trade.change_id import ChangeID
 
-class TestStringMethods(unittest.TestCase):
+class TestChangeID(unittest.TestCase):
 
     def test_args(self):
         ChangeID()

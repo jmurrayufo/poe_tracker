@@ -42,12 +42,13 @@ class TradeAPI(metaclass=Singleton):
         # self.log.info("Pulling data...")
 
         try:
-            r = await httpx.get(
-                self.poe_trade_url,
-                params={"id":self.gen_change_id()},
-                headers={"Cookie": f"POESESSID={self.poesessid}"},
-                timeout=10
-                )
+            async with httpx.AsyncClient() as client:
+                r = await client.get(
+                    self.poe_trade_url,
+                    params={"id":self.gen_change_id()},
+                    headers={"Cookie": f"POESESSID={self.poesessid}"},
+                    timeout=10
+                    )
         except httpx.exceptions.ReadTimeout:
             return False
         except httpx.exceptions.ConnectTimeout:
