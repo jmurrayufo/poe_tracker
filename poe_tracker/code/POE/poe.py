@@ -3,6 +3,7 @@ import datetime
 import discord
 import re
 import shlex
+import time
 
 from . import mongo
 from ..args import Args
@@ -104,12 +105,28 @@ class POE:
             description='Estimate current currency values',
         )
         sub_parser.add_argument(
-            "account",
+            "tab_name",
+            help="Name of stash to price check",
+            metavar="NAME",
+        )
+        sub_parser.add_argument(
+            "--account",
             help="Name of account to check against",
         )
         sub_parser.add_argument(
-            "tab_name",
-            help="Name of stash to price check",
+            "--rich","-r",
+            help="Give rich feedback",
+            action='store_true',
+        )
+        sub_parser.add_argument(
+            "--top","-t",
+            help="List top N most valuable stacks",
+            metavar="N",
+        )
+        sub_parser.add_argument(
+            "--watch","-w",
+            help="Watch stash for an update before responding",
+            action='store_true',
         )
         sub_parser.set_defaults(cmd=self.trade_commands.stash)
 
@@ -226,7 +243,9 @@ class POE:
 
                 elif hasattr(results, 'cmd'):
                     # Looks like we got a valid command parsing, execute!
+                    t0 = time.time()
                     await results.cmd(results)
+                    self.log.info(f"Took {time.time()-t0} to process a {results.cmd} command")
                     return
 
                 else:

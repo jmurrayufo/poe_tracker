@@ -50,8 +50,19 @@ class TradeCommands:
 
         e = Estimator(use_cache=True)
 
-        self.log.info(f"Ran test with {args}")
+        self.log.info(f"Ran command with {args}")
         await args.message.channel.send(f"Begining search for stash tab `{args.tab_name}`")
+        
+        # Manage args.account
+        if args.account is None:
+            account = await self.db.accounts.find_one({"discordId":args.message.author.id})
+            if account is None:
+                await args.message.channel.send(f"I don't have an account for you. Maybe consider using the `register` command first?")
+                return
+            args.account = account['accountName']
+
+        # Find stashes 
+        self.log.info("Begin to look for stashes")
         stashes = []
         async for stash_dict in self.db.stashes.find(
                 {
@@ -64,8 +75,10 @@ class TradeCommands:
         if not len(stashes):
             await args.message.channel.send(f"<@{args.message.author.id}>, I didn't find any stashes named `{args.tab_name}`. Try again?")
             return
-        delay_message = await args.message.channel.send(f"<@{args.message.author.id}>, this might take me a moment...")
+        # delay_message = await args.message.channel.send(f"<@{args.message.author.id}>, this might take me a moment...")
+        self.log.info("Begin to look for items")
         total_value = 0.0
+        rich_send = []
         t1 = time.time()
         for stash_dict in stashes:
             for item_id in stash_dict['items']:
@@ -73,8 +86,7 @@ class TradeCommands:
                 if item_dict is None:
                     continue
 
-                # LIMITED CATEGORIES
-
+                # LIMITED CATEGORIES FOR NOW
                 if item_dict['extended']['category'] not in ['currency', 'cards']:
                     continue
                 
@@ -85,10 +97,18 @@ class TradeCommands:
                 
                 stackSize = item_dict.get('stackSize', 1)
                 total_value += value * stackSize
-                print(f"{item_dict['typeLine']:>30} {stackSize:5} {value:6.2f} {stackSize*value:8.2f}  {total_value:8.2f}")
-        await delay_message.delete()
+                rich_send.append(f"{item_dict['typeLine']:>30} {stackSize:5} {value:6.2f} {stackSize*value:8.2f}  {total_value:8.2f}")
+
+        if args.rich:
+            self.log.info("Begin rich DM")
+            message_buffer = f"```\n{'Item':>30} {'#':>5} {'Val':>6} {'StkVal':>8} {'Total Val':>8}\n"
+            for r in rich_send:
+                message_buffer += r + "\n"
+                if len(message_buffer) >= 1900 or id(r) == id(rich_send[-1]):
+                    message_buffer += "```"
+                    await args.message.channel.send(message_buffer)
+                    message_buffer = "```\n"
         await args.message.channel.send(f"Estimated total value in `{args.tab_name}` is currently {total_value:,.0f}C")
-        self.log.info(f"Took {time.time()-t1} to process a test command")
 
     async def currency(self, args):
 
