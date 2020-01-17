@@ -91,12 +91,12 @@ class Mongo(metaclass=Singleton):
                     name="subcategories",
                     sparse=True,
             )
-            self.log.info("db.items: Create 'id' index")
-            await self.db.items.create_index(
-                    [('id', 1)],
-                    name="id",
-                    unique=True,
-            )
+            # self.log.info("db.items: Create 'id' index")
+            # await self.db.items.create_index(
+            #         [('id', 1)],
+            #         name="id",
+            #         unique=True,
+            # )
             self.log.info("db.items: Create 'id_hashed' index")
             await self.db.items.create_index(
                     [('id', 'hashed')],
