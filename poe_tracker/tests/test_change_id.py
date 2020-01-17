@@ -45,6 +45,7 @@ class TestChangeID(unittest.TestCase):
         x = ChangeID(1,2,3,4,5)
         assert_equal(str(x),"1-2-3-4-5")
 
+    @unittest.skip("Don't bother with ninja testing most of the time")
     def test_poe_ninja(self):
         x = ChangeID(1,2,3,4,5)
         y = ChangeID(x)

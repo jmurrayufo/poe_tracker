@@ -36,14 +36,6 @@ class Price:
         "silver",
     ]
 
-    currency_remapping = {
-        "gcp":"gemcutter",
-        "cartographer":"chisel",
-        "fuse":"fusing",
-        "exalted":"exa",
-        "mirror":"mir",
-    }
-
     item_remapping = {
         "alch":"Orb of Alchemy",
         "alt":"Orb of Alteration",
@@ -123,9 +115,6 @@ class Price:
         if self.value_name not in self.valid_currencies:
             return False
         
-        if self.value_name in self.currency_remapping:
-            self.value_name = self.currency_remapping[self.value_name]
-
         if self.value_name in self.item_remapping:
             self.value_name = self.item_remapping[self.value_name]
 
