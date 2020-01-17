@@ -46,7 +46,6 @@ class TestStash(unittest.TestCase):
         x = np.array([1,2,3,4,5,6,7,8,9,10])
         w = np.array([1,1,1,1,1,1,1,1,1,10000])
         print(self.weighted_percentile(x, 25, w))
-        assert False
 
     def reject_outliers(self, data):
         d = np.abs(data[:,0] - np.median(data[:,0]))

@@ -1,3 +1,3 @@
 #!/bin/bash
 
-pipenv run python -m nose --with-timer
+pipenv run python -m nose --with-timer $@
