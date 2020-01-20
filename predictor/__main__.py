@@ -1,5 +1,4 @@
-
-
+"""
 import warnings
 warnings.filterwarnings("ignore")
 import os
@@ -18,8 +17,8 @@ print("Predictor online!")
 
 # exit()
 
-neurons = [128,256]
-depths = [6,7,8,9,10]
+neurons = [128,256,512]
+depths = [2,3,4,5,6,7,8]
 activates = [
     'relu',
     # 'elu',
@@ -37,3 +36,4 @@ for n,d,a in product(neurons, depths, activates):
         continue
     predictions.run(20,f"models/{a}/{d}x{n}")
     gc.collect()
+"""

@@ -52,7 +52,7 @@ def run(epochs=10, batch_size=100, resume=None, layers=2, neurons=64, activation
             model.add(tf.keras.layers.Dense(
                     neurons, 
                     activation=activation,
-                    kernel_regularizer=tf.keras.regularizers.l1(0.000001),
+                    # kernel_regularizer=tf.keras.regularizers.l1(0.000001),
                     ))
             model.add(tf.keras.layers.Dropout(0.5))
         model.add(tf.keras.layers.Dense(16, activation='softmax'))
