@@ -80,17 +80,17 @@ class Mongo(metaclass=Singleton):
                     name="updatedAt",
                     expireAfterSeconds=3*24*60*60
             )
-            self.log.info("db.items: Create 'category' index")
-            await self.db.items.create_index(
-                    [('extended.category', 1)],
-                    name="category",
-            )
-            self.log.info("db.items: Create 'subcategories' index")
-            await self.db.items.create_index(
-                    [('extended.subcategories', 1)],
-                    name="subcategories",
-                    sparse=True,
-            )
+            # self.log.info("db.items: Create 'category' index")
+            # await self.db.items.create_index(
+            #         [('extended.category', 1)],
+            #         name="category",
+            # )
+            # self.log.info("db.items: Create 'subcategories' index")
+            # await self.db.items.create_index(
+            #         [('extended.subcategories', 1)],
+            #         name="subcategories",
+            #         sparse=True,
+            # )
             # self.log.info("db.items: Create 'id' index")
             # await self.db.items.create_index(
             #         [('id', 1)],
@@ -102,27 +102,27 @@ class Mongo(metaclass=Singleton):
                     [('id', 'hashed')],
                     name="id_hashed",
             )
-            self.log.info("db.items: Create 'league' index")
-            await self.db.items.create_index(
-                    [('league', 1)],
-                    name="league",
-            )
-            self.log.info("db.items: Create 'name' index")
-            await self.db.items.create_index(
-                    [('name', 1)],
-                    name="name",
-            )
+            # self.log.info("db.items: Create 'league' index")
+            # await self.db.items.create_index(
+            #         [('league', 1)],
+            #         name="league",
+            # )
+            # self.log.info("db.items: Create 'name' index")
+            # await self.db.items.create_index(
+            #         [('name', 1)],
+            #         name="name",
+            # )
             self.log.info("db.items: Create 'typeLine' index")
             await self.db.items.create_index(
                     [('typeLine', 1)],
                     name="typeLine",
             )
-            self.log.info("db.items: Create 'note' index")
-            await self.db.items.create_index(
-                    [('note', 1)],
-                    name="note",
-                    sparse=True,
-            )
+            # self.log.info("db.items: Create 'note' index")
+            # await self.db.items.create_index(
+            #         [('note', 1)],
+            #         name="note",
+            #         sparse=True,
+            # )
             self.log.info("db.items: Create 'stash_id' index")
             await self.db.items.create_index(
                     [('stash_id', 1)],
