@@ -36,7 +36,7 @@ class ModFinder:
         i = 0
         last_update = time.time()
         values = []
-        for item in self.db.items.sold.find({}, limit=1000):
+        for item in self.db.items.sold.find({}, limit=100000):
             v = convert_value(item['_value'], item['_value_name'], self.db)
             if v is None:
                 continue
@@ -45,7 +45,7 @@ class ModFinder:
         edges = np.insert(edges, 0, 0)
         edges = np.append(edges, 1e9)
         edges = [0,1,2,5,10,20,50,100,200,500,1000,2000,5000,10000,20000,50000,100000]
-        edges = [0,1,2,5,10,20,50,100,200,500,1000,100000]
+        edges = [0,1,2,5,10,20,50,100,200,100000]
         print(edges)
         bins = np.histogram(values, bins=edges)
         for idx in range(len(bins[1][:-1])):
