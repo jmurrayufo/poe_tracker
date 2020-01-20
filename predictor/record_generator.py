@@ -56,6 +56,9 @@ def run(max_batch_size=500, max_batches=5):
     # Used to clasify items into buckets
     edges = [0, 1, 2, 4, 10, 21, 46, 100, 215, 464, 1000, 2154, 4641, 10000, 21544, 46415, 100000]
 
+    edges = [0, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000]
+    bins = np.zeros(16, dtype=int)
+
     array_size = 0
     for mod in db.items.mods.find():
         array_size += max(1, mod['numbers'])
@@ -63,7 +66,9 @@ def run(max_batch_size=500, max_batches=5):
     print(array_size)
 
     _filter = {
-        "extended.category":"jewels",
+        # "extended.category":"jewels",
+        "extended.category":"armour",
+        "extended.subcategories":"gloves",
         "frameType":2,
         "league":"Metamorph",
     }
@@ -93,7 +98,11 @@ def run(max_batch_size=500, max_batches=5):
         value = np.zeros(16, dtype=np.float32)
         for idx in range(16):
             if item_value < edges[idx+1]:
+                if bins[idx] >= 250:
+                    item_value = float('inf')
+                    continue
                 value[idx] = 1
+                bins[idx] += 1
                 break
         else:
             continue
@@ -123,10 +132,12 @@ def run(max_batch_size=500, max_batches=5):
         }))
 
         item_batch.append(example)
-        if len(item_batch) >= max_batch_size:
+        if len(item_batch) >= max_batch_size and bins[0] >= 250:
             write_batch(item_batch, stats)
             item_batch = []
             stats['current_batch'] += 1
+            print(bins)
+            bins = np.zeros(16, dtype=int)
         if stats['current_batch'] == max_batches:
             break
     

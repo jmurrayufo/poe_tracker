@@ -14,25 +14,26 @@ from . import predictions, model_trainer, record_generator
 
 print("Predictor online!")
 # record_generator.run(max_batch_size=1000, max_batches=100)
-# record_generator.run(max_batch_size=10000, max_batches=100)
+# record_generator.run(max_batch_size=250*6, max_batches=5)
 
+# exit()
 
-neurons = [8,16,32,64,128,256]
-depths = [2,4]
+neurons = [128,256]
+depths = [6,7,8,9,10]
 activates = [
     'relu',
-    'elu',
-    'selu',
-    'sigmoid',
-    #'linear',
+    # 'elu',
+    # 'selu',
+    # 'sigmoid',
+    # 'linear',
     ]
 for n,d,a in product(neurons, depths, activates):
-    model_trainer.run(epochs=1000, batch_size=1000, layers=d, neurons=n, activation=a)
+    model_trainer.run(epochs=250, batch_size=1000, layers=d, neurons=n, activation=a)
     try:
         pass
     except:
         print("\nCaught exception, sleeping for 5 second then continueing")
         time.sleep(5)
         continue
-    predictions.run(10,f"models/{a}/{d}x{n}")
+    predictions.run(20,f"models/{a}/{d}x{n}")
     gc.collect()

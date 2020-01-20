@@ -52,14 +52,18 @@ def run(epochs=10, batch_size=100, resume=None, layers=2, neurons=64, activation
             model.add(tf.keras.layers.Dense(
                     neurons, 
                     activation=activation,
-                    # kernel_regularizer=tf.keras.regularizers.l1(0.001),
+                    kernel_regularizer=tf.keras.regularizers.l1(0.000001),
                     ))
+            model.add(tf.keras.layers.Dropout(0.5))
         model.add(tf.keras.layers.Dense(16, activation='softmax'))
 
         model.compile(
                 optimizer='adam',
                 loss='mean_squared_error', 
-                metrics=['accuracy'],
+                metrics=[
+                    'accuracy',
+                    'binary_crossentropy',
+                ],
         )
 
     early_stopping = tf.keras.callbacks.EarlyStopping(
@@ -75,7 +79,7 @@ def run(epochs=10, batch_size=100, resume=None, layers=2, neurons=64, activation
             verbose=1,
             callbacks=[
                 tensorboard_callback, 
-                early_stopping,
+                # early_stopping,
             ],
             validation_data=validation_ds,
     )
