@@ -113,7 +113,7 @@ def parse_record(rr):
 
 
 filenames = list(map(str, pathlib.Path().glob("item_values.*.tfrecord")))
-raw_dataset = tf.data.TFRecordDataset(filenames, "GZIP")
+raw_dataset = tf.data.TFRecordDataset(filenames)
 
 mapped_data = raw_dataset.map(parse_record)
 

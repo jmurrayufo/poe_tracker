@@ -28,19 +28,33 @@ class Bins:
             self.edges = np.insert(self.edges, 0, 0)
 
         self.bins = [list() for x in range(len(self.edges))]
+        self.bin_cap = bin_cap
 
 
     def append(self, bin_index, value):
         self.bins[bin_index].append(value)
+        if self.bin_cap and len(self.bins[bin_index]) > self.bin_cap:
+            self.bins[bin_index].pop(0)
 
 
     def insert(self, value, item):
         for idx in range(len(self.edges)-1):
             if self.edges[idx] <= value < self.edges[idx+1]:
                 self.bins[idx].append(item)
+                if self.bin_cap and len(self.bins[idx]) > self.bin_cap:
+                    self.bins[idx].pop(0)
                 break
         else:
             self.bins[-1].append(item)
+            if self.bin_cap and len(self.bins[-1]) > self.bin_cap:
+                self.bins[-1].pop(0)
+
+
+    def clear(self, bin_index=None):
+        if bin_index is None:
+            self.bins = [list() for x in range(len(self.edges))]
+            return
+        self.bins[bin_index] = list()
 
 
     def __len__(self):
@@ -94,6 +108,16 @@ class Bins:
             pred_array = [x/sum(pred_array) for x in pred_array]
 
         return sum([self.bin_value(i)*pred_array[i] for i in range(len(pred_array))])
+
+    def get_index(self, value):
+        """Given a value, return it's proper index in the bins
+        """
+        for idx in range(len(self.edges)-1):
+            if self.edges[idx] <= value < self.edges[idx+1]:
+                return idx
+        else:
+            return idx
+
 
 
 if __name__ == '__main__':
