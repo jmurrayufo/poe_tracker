@@ -50,13 +50,13 @@ class ValidationStats:
 
         # Setup Validation DS
         filenames = list(map(str, pathlib.Path(data_dir).glob("val.*.tfrecord")))
+        if len(filenames) == 0:
+            return
         raw_dataset = tf.data.TFRecordDataset(filenames, num_parallel_reads=1)
         raw_dataset = raw_dataset.prefetch(tf.data.experimental.AUTOTUNE)
         # raw_dataset = raw_dataset.cache()
         mapped_data = raw_dataset.map(self.parse_record, num_parallel_calls=tf.data.experimental.AUTOTUNE)
         validation_ds = mapped_data.batch(100)
-
-
 
         np.set_printoptions(precision=2, suppress=True, linewidth=1000)
         errors = defaultdict(lambda: {"count": 0, "total_error": 0, "total_correct":0})

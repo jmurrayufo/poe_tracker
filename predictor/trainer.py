@@ -97,6 +97,8 @@ class Trainer:
 
         # Setup Training DS
         filenames = list(map(str, pathlib.Path(data_dir).glob("train.*.tfrecord")))
+        if len(filenames) == 0:
+            return
         raw_dataset = tf.data.TFRecordDataset(filenames, num_parallel_reads=1)
         raw_dataset = raw_dataset.prefetch(tf.data.experimental.AUTOTUNE)
         # raw_dataset = raw_dataset.cache()
@@ -107,6 +109,8 @@ class Trainer:
 
         # Setup Validation DS
         filenames = list(map(str, pathlib.Path(data_dir).glob("val.*.tfrecord")))
+        if len(filenames) == 0:
+            return
         raw_dataset = tf.data.TFRecordDataset(filenames, num_parallel_reads=1)
         raw_dataset = raw_dataset.prefetch(tf.data.experimental.AUTOTUNE)
         # raw_dataset = raw_dataset.cache()
