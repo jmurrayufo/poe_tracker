@@ -77,7 +77,7 @@ gen = generator.Generator(
 # Train models
 
 t = trainer.Trainer(7136, bin_slots, layers, neurons, activation, max_epochs)
-t()
+# t()
 
 s = validation_stats.ValidationStats(layers, neurons, activation)
 s()

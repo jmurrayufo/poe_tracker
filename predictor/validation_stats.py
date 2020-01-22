@@ -76,7 +76,7 @@ class ValidationStats:
         total_count = 0
         total_correct = 0
         total_error = 0
-        for bin_value in errors:
+        for bin_value in sorted(errors):
             print(f"\nFor Bin Value: {bin_value:2}  ", end='')
 
             print(f"Count: {errors[bin_value]['count']:6,d}    ", end='')
