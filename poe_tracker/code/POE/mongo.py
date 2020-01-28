@@ -78,7 +78,7 @@ class Mongo(metaclass=Singleton):
             await self.db.items.create_index(
                     [('_updatedAt', 1)],
                     name="updatedAt",
-                    expireAfterSeconds=3*24*60*60
+                    expireAfterSeconds=7*24*60*60
             )
             # self.log.info("db.items: Create 'category' index")
             # await self.db.items.create_index(
@@ -272,7 +272,7 @@ class Mongo(metaclass=Singleton):
             await self.db.stashes.create_index(
                     [('_updatedAt', 1)],
                     name="updatedAt",
-                    expireAfterSeconds=3*24*60*60,
+                    expireAfterSeconds=7*24*60*60,
             )
             self.log.info("db.stashes: Create 'id_hashed' index")
             await self.db.stashes.create_index(
