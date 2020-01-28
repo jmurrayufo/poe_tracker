@@ -76,7 +76,7 @@ class PostProcessor:
         if (datetime.datetime.utcnow() - updated_pointer) < datetime.timedelta(minutes=70):
             return
         start_update = time.time()
-        self.log.info("Begin cleaning process")
+        self.log.debug("Begin cleaning process")
 
         element = 0
         sold = 0
@@ -127,4 +127,4 @@ class PostProcessor:
         # updated_pointer -= datetime.timedelta(seconds=1)
 
         await self.db.cache.update_one({"name":"trade"},{"$set":{"filter_updated_pointer":updated_pointer}})
-        self.log.info(f"Cleaning {element/(time.time()-t1):,.0f} stashes/s. Found {sold:,d}/{element:,d} missing items. Currently {datetime.datetime.utcnow() - updated_pointer} behind")
+        self.log.debug(f"Cleaning {element/(time.time()-t1):,.0f} stashes/s. Found {sold:,d}/{element:,d} missing items. Currently {datetime.datetime.utcnow() - updated_pointer} behind")

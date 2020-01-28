@@ -103,10 +103,10 @@ class Trade_Loop:
                 poe_ninja_change_id = ChangeID()
                 await poe_ninja_change_id.async_poe_ninja()
                 
-                self.log.info(f"ChangeID delta: {poe_ninja_change_id-last_good_change_id}")
+                self.log.debug(f"ChangeID delta: {poe_ninja_change_id-last_good_change_id}")
                 last_poe_ninja_update = time.time()
                 
-                self.log.info(f"ChangeID: {last_good_change_id}")
+                self.log.debug(f"ChangeID: {last_good_change_id}")
 
 
     async def queue_up_stashes(self):
