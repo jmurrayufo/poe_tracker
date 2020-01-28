@@ -58,6 +58,7 @@ class TradeAPI(metaclass=Singleton):
         if r.status_code != 200:
             self.log.error(f"Got error code of {r.status_code}")
             self.log.error(r)
+            self.log.error(r.headers)
             return False
         try:
             self.log.debug(r.headers['X-Rate-Limit-Ip'])
@@ -94,7 +95,7 @@ class TradeAPI(metaclass=Singleton):
         t1 = time.time()
         t2 = time.time()
         while 1:
-            while time.time() - t1 < 1:
+            while time.time() - t1 < 1.1:
                 await asyncio.sleep(0.1)
             t1 = t2
             t2 = time.time()
